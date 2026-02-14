@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="release-admin-server">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/release-admin-server.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

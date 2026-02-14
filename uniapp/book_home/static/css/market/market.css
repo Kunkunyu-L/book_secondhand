@@ -1,0 +1,200 @@
+/* 基础样式 */
+.book-market-page {
+	min-height: 100vh;
+	background-color: #fafafa;
+	padding-bottom: 20px; /* 底部预留间距，避免内容被遮挡 */
+}
+/* 隐藏所有滚动条（兼容 H5、小程序、App） */
+/* 1. WebKit 内核（Chrome、Safari、小程序、App） */
+::-webkit-scrollbar {
+	display: none !important;
+	width: 0 !important;
+	height: 0 !important;
+}
+
+/* 2. 小程序额外兼容（部分安卓机型） */
+scroll-view ::-webkit-scrollbar {
+	display: none !important;
+}
+
+/* 3. 禁止滚动条占位（避免页面抖动） */
+::-webkit-scrollbar-track {
+	background: transparent !important;
+}
+
+/* 4. 兼容 IE/Edge（可选，若需支持 H5 端） */
+scrollbar-width: none !important;
+-ms-overflow-style: none !important;
+
+/* 搜索栏 */
+.search-container {
+	padding: 10px 16px;
+	background-color: #fff;
+}
+.search-box {
+	display: flex;
+	align-items: center;
+	background-color: #f5f5f5;
+	border-radius: 6px;
+	padding: 8px 12px;
+}
+.search-input {
+	flex: 1;
+	font-size: 14px;
+	background: transparent;
+	border: none;
+	outline: none;
+	margin-left: 6px;
+}
+.search-input::placeholder {
+	color: #999;
+}
+
+/* 分类标签 */
+.tag-container {
+	padding: 8px 16px;
+	background-color: #fff;
+	border-bottom: 1px solid #eee;
+}
+.tag-scroll {
+	white-space: nowrap;
+	padding-bottom: 4px;
+}
+.tag-item {
+	display: inline-block;
+	padding: 5px 12px;
+	margin-right: 8px;
+	font-size: 13px;
+	border-radius: 20px;
+	color: #666;
+	background-color: #f5f5f5;
+}
+.tag-item.active {
+	background-color: #ff4d4f;
+	color: #fff;
+}
+/* 隐藏滚动条 */
+.tag-scroll::-webkit-scrollbar {
+	display: none;
+}
+
+/* 书籍列表（固定2列） */
+.book-list {
+	display: flex;
+	flex-wrap: wrap;
+	padding: 10px;
+}
+.book-card {
+	width: calc(50% - 10px); /* 2列布局，间距10px */
+	margin: 5px;
+	background-color: #fff;
+	border-radius: 8px;
+	overflow: hidden;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+	transition: transform 0.2s ease;
+}
+.book-card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* 书籍封面 */
+.book-img-wrap {
+	position: relative;
+	width: 100%;
+	height: 180px; /* 固定封面高度，保持排版一致 */
+	overflow: hidden;
+}
+.book-img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.book-condition-tag1 {
+	position: absolute;
+	top: 8px;
+	left: 8px;
+	background-color: #ff4d4f;
+	color: #fff;
+	font-size: 11px;
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-weight: 500;
+}
+.book-condition-tag2 {
+	position: absolute;
+	top: 8px;
+	left: 46px;
+	background-color: #ff4d4f;
+	color: #fff;
+	font-size: 11px;
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-weight: 500;
+}
+
+/* 书籍信息 */
+.book-info {
+	padding: 10px;
+}
+.book-title {
+	font-size: 14px;
+	font-weight: 500;
+	color: #333;
+	display: -webkit-box;
+	-webkit-line-clamp: 1;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	margin-bottom: 4px;
+}
+.book-author {
+	font-size: 12px;
+	color: #999;
+	display: -webkit-box;
+	-webkit-line-clamp: 1;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	margin-bottom: 8px;
+}
+.book-meta {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+.seller-info {
+	display: flex;
+	align-items: center;
+}
+.seller-avatar {
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+.seller-name {
+	font-size: 11px;
+	color: #666;
+	margin-left: 5px;
+	white-space: nowrap;
+	max-width: 80px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.book-price {
+	font-size: 15px;
+	font-weight: 600;
+	color: #ff4d4f;
+}
+
+/* 加载更多 */
+.load-more {
+	isplay: flex;
+ 	lign-items: center;
+ 	ustify-content: center;
+ 	adding: 20px 0;
+ 	olor: #999;
+}
+.load-text {
+ 	ont-size: 13px;
+ 	argin-left: 8px;
+}
