@@ -16,22 +16,43 @@ function requestInterceptor(config) {
   return config;
 }
 
+// 登录失效处理：清除 token 并跳转登录
+function handleLoginExpired() {
+  uni.removeStorageSync('token');
+  uni.removeStorageSync('userInfo');
+  uni.showToast({ title: '登录已失效，请重新登录', icon: 'none', duration: 2000 });
+  setTimeout(() => {
+    const pages = getCurrentPages();
+    const cur = pages[pages.length - 1];
+    const route = cur ? (cur.route || '') : '';
+    if (route && route.indexOf('auth/login') === -1 && route.indexOf('auth/register') === -1) {
+      uni.reLaunch({ url: '/pages/auth/login' });
+    }
+  }, 1500);
+}
+
 // 响应拦截器（收到响应后执行）
 function responseInterceptor(response) {
   uni.hideLoading();
   const res = response.data;
+  const statusCode = response.statusCode || (res && res.status);
 
-  // 业务错误：用后端返回的 message 提示
-  if (res.status !== 200) {
-    uni.showToast({ 
-      title: res.message || '操作失败', // 直接使用后端的 message
-      icon: 'none' 
-    });
-    return Promise.reject(res); // 失败时返回完整错误信息
+  // HTTP 401 或业务状态 401：token 过期或未登录，统一提示登录失效并退出
+  if (statusCode === 401 || (res && res.status === 401)) {
+    handleLoginExpired();
+    return Promise.reject(res || { status: 401, message: '登录已失效' });
   }
 
-  // 业务成功：不重复提示（由页面逻辑决定是否提示）
-  return res; // 成功时返回完整数据（包含 token 等）
+  // 业务错误：用后端返回的 message 提示
+  if (res && res.status !== 200) {
+    uni.showToast({
+      title: res.message || '操作失败',
+      icon: 'none'
+    });
+    return Promise.reject(res);
+  }
+
+  return res;
 }
 
 // 错误拦截器（请求失败时执行）
