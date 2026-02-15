@@ -1,21 +1,6 @@
 <template>
   <view class="setting-page">
     <view class="setting-card">
-      <view class="setting-item" @click="editProfile">
-        <text class="setting-label">个人资料</text>
-        <uni-icons type="right" size="16" color="#ccc"></uni-icons>
-      </view>
-      <view class="setting-item" @click="goAddress">
-        <text class="setting-label">收货地址</text>
-        <uni-icons type="right" size="16" color="#ccc"></uni-icons>
-      </view>
-      <view class="setting-item" @click="goMyBooks">
-        <text class="setting-label">我发布的图书</text>
-        <uni-icons type="right" size="16" color="#ccc"></uni-icons>
-      </view>
-    </view>
-
-    <view class="setting-card">
       <view class="setting-item">
         <text class="setting-label">关于我们</text>
         <text class="setting-value">二手书交易平台 v1.0.0</text>
@@ -32,10 +17,6 @@
 
 <script setup>
 import request from '@/untils/request.js'
-
-const editProfile = () => { uni.navigateTo({ url: '/pages/profile/edit' }) }
-const goAddress = () => { uni.navigateTo({ url: '/pages/address/address' }) }
-const goMyBooks = () => { uni.navigateTo({ url: '/pages/publish/mybooks' }) }
 
 const clearCache = () => {
   uni.showModal({
@@ -67,7 +48,7 @@ const logout = () => {
 </script>
 
 <style scoped>
-.setting-page { min-height: 100vh; background: #f5f5f5; padding: 20rpx; }
+.setting-page { height: 100vh; overflow-y: auto; background: #f5f5f5; padding: 20rpx; box-sizing: border-box; }
 .setting-card { background: #fff; border-radius: 16rpx; margin-bottom: 20rpx; }
 .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 30rpx 24rpx; border-bottom: 1rpx solid #f5f5f5; }
 .setting-item:last-child { border-bottom: none; }

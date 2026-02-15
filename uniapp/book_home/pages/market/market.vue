@@ -1,17 +1,6 @@
 <template>
   <view class="book-market-page">
 
-    <!-- 搜索栏 -->
-    <view class="search-container">
-      <view class="search-box">
-        <uni-icons type="search" size="16" color="#999" class="search-icon"></uni-icons>
-        <input type="text" placeholder="搜索书籍名称/作者/ISBN" class="search-input" v-model="keyword" @confirm="doSearch" />
-      </view>
-	  <view class="search-btn" @click="doSearch">
-	    <text style="color: #007AFF; font-size: 28rpx;">搜索</text>
-	  </view>
-    </view>
-
     <!-- 分类标签 -->
     <view class="tag-container">
       <scroll-view scroll-x class="tag-scroll">
@@ -27,13 +16,26 @@
       </scroll-view>
     </view>
 
+    <!-- 搜索框 -->
+    <view class="search-container">
+      <input
+        class="search-input"
+        type="text"
+        v-model="keyword"
+        placeholder="搜索书名、作者"
+        confirm-type="search"
+        @confirm="doSearch"
+      />
+      <button class="search-btn" @click="doSearch">搜索</button>
+    </view>
+
     <!-- 书籍列表 -->
     <view class="book-list">
       <view class="book-card" v-for="(book, index) in filteredBooks" :key="book.id + '_' + book.source">
         <view @click="detailBtn(book.id, book.bcp_type || book.source)">
           <!-- 书籍封面 -->
           <view class="book-img-wrap">
-            <image :src="book.cover_img" mode="aspectFill" class="book-img"></image>
+            <image :src="getImageUrl(book.cover_img)" mode="aspectFill" class="book-img"></image>
             <view class="book-condition-tag1">{{ book.bcp_condition_desc || getConditionText(book.bcp_condition) }}</view>
 			<view class="book-condition-tag2" v-if="!book.nickname">平台售卖</view>
           </view>
@@ -76,6 +78,7 @@
 
 <script>
 import request from '@/untils/request.js';
+import { getImageUrl } from '@/untils/config.js';
 export default {
   data() {
     return {
@@ -106,6 +109,7 @@ export default {
     }
   },
   methods: {
+	getImageUrl,
 	async loadData() {
 		this.loading = true;
 		try {
@@ -168,10 +172,25 @@ export default {
   align-items: center;
   padding: 16rpx 24rpx;
   background: #fff;
+  gap: 16rpx;
+}
+.search-input {
+  flex: 1;
+  height: 64rpx;
+  padding: 0 24rpx;
+  background: #f5f5f5;
+  border-radius: 32rpx;
+  font-size: 28rpx;
 }
 .search-btn {
-  margin-left: 16rpx;
   flex-shrink: 0;
+  padding: 0 32rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  font-size: 28rpx;
+  background: #007AFF;
+  color: #fff;
+  border-radius: 32rpx;
 }
 .empty-result {
   display: flex;

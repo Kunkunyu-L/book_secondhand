@@ -90,12 +90,25 @@
       </view>
       <view class="form-item">
         <text class="form-label">所在地区</text>
-        <view style="display:flex;gap:10rpx;flex:1;">
-          <input class="form-input" v-model="form.province" placeholder="省" />
-          <input class="form-input" v-model="form.city" placeholder="市" />
-          <input class="form-input" v-model="form.district" placeholder="区" />
+        <view class="region-row" @click="openRegionPickerByState">
+          <text class="region-item" :class="{ placeholder: !form.province }">{{ form.province || '请选择省' }}</text>
+          <text class="region-item" :class="{ placeholder: !form.city }">{{ form.city || '请选择市' }}</text>
+          <text class="region-item" :class="{ placeholder: !form.district }">{{ form.district || '请选择区' }}</text>
+          <uni-icons type="right" size="14" color="#999"></uni-icons>
         </view>
       </view>
+      <!-- 地区选择弹窗 -->
+      <uni-popup ref="regionPopup" type="bottom" background-color="#fff">
+        <view class="region-popup">
+          <view class="region-popup-title">{{ regionStepText }}</view>
+          <scroll-view scroll-y class="region-list" v-if="regionOptions.length">
+            <view class="region-opt" v-for="opt in regionOptions" :key="opt.id" @click="onRegionSelect(opt)">
+              {{ opt.name }}
+            </view>
+          </scroll-view>
+          <view v-else class="region-loading">{{ regionLoading ? '加载中...' : '暂无数据' }}</view>
+        </view>
+      </uni-popup>
       <view class="form-item">
         <text class="form-label">详细地址</text>
         <input class="form-input" v-model="form.detail" placeholder="街道、门牌号等" />
@@ -110,7 +123,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import request from '@/untils/request.js'
 
@@ -120,6 +133,17 @@ const loading = ref(false)
 const showForm = ref(false)
 const editingId = ref(null)
 const form = ref({ name: '', phone: '', province: '', city: '', district: '', detail: '', is_default: false })
+// 地区选择：存储 id 用于 getchildren
+const provinceId = ref('')
+const cityId = ref('')
+const regionStep = ref('province') // province | city | district
+const regionOptions = ref([])
+const regionLoading = ref(false)
+const regionPopup = ref(null)
+const regionStepText = computed(() => {
+  const m = { province: '选择省份', city: '选择城市', district: '选择区县' }
+  return m[regionStep.value] || ''
+})
 
 onLoad((options) => {
   if (options.select === '1') isSelectMode.value = true
@@ -146,6 +170,8 @@ const selectAddress = (item) => {
 const editAddress = (item) => {
   editingId.value = item.id
   form.value = { name: item.name, phone: item.phone, province: item.province, city: item.city, district: item.district, detail: item.detail, is_default: !!item.is_default }
+  provinceId.value = ''
+  cityId.value = ''
   showForm.value = true
 }
 
@@ -153,6 +179,101 @@ const closeForm = () => {
   showForm.value = false
   editingId.value = null
   form.value = { name: '', phone: '', province: '', city: '', district: '', detail: '', is_default: false }
+  provinceId.value = ''
+  cityId.value = ''
+}
+
+// 省市区走后端代理，避免腾讯地图 CORS
+const loadProvinces = async () => {
+  regionLoading.value = true
+  regionOptions.value = []
+  try {
+    const res = await request({ url: '/region/list', method: 'GET' })
+    if (res?.data) regionOptions.value = res.data
+  } catch (e) {}
+  regionLoading.value = false
+}
+
+const loadChildren = async (parentId) => {
+  regionLoading.value = true
+  regionOptions.value = []
+  try {
+    const res = await request({ url: `/region/children?id=${encodeURIComponent(parentId)}`, method: 'GET' })
+    if (res?.data) regionOptions.value = res.data
+  } catch (e) {}
+  regionLoading.value = false
+}
+
+// 根据当前已选状态决定打开省/市/区（选完省后点“所在地区”打开市，再选市后打开区）
+const openRegionPickerByState = async () => {
+  if (!form.value.province) {
+    await openRegionPicker('province')
+    return
+  }
+  if (!form.value.city) {
+    if (!provinceId.value) {
+      uni.showToast({ title: '请先选择省份', icon: 'none' })
+      return
+    }
+    await openRegionPicker('city')
+    return
+  }
+  if (!form.value.district) {
+    if (!cityId.value) {
+      uni.showToast({ title: '请先选择城市', icon: 'none' })
+      return
+    }
+    await openRegionPicker('district')
+    return
+  }
+  await openRegionPicker('district')
+}
+
+const openRegionPicker = async (step) => {
+  regionStep.value = step
+  regionOptions.value = []
+  if (step === 'province') {
+    form.value.province = ''
+    form.value.city = ''
+    form.value.district = ''
+    provinceId.value = ''
+    cityId.value = ''
+    await loadProvinces()
+  } else if (step === 'city') {
+    if (!provinceId.value) {
+      uni.showToast({ title: '请先选择省份', icon: 'none' })
+      return
+    }
+    form.value.city = ''
+    form.value.district = ''
+    cityId.value = ''
+    await loadChildren(provinceId.value)
+  } else if (step === 'district') {
+    if (!cityId.value) {
+      uni.showToast({ title: '请先选择城市', icon: 'none' })
+      return
+    }
+    form.value.district = ''
+    await loadChildren(cityId.value)
+  }
+  regionPopup.value?.open()
+}
+
+const onRegionSelect = (opt) => {
+  if (regionStep.value === 'province') {
+    form.value.province = opt.name
+    provinceId.value = opt.id
+    regionPopup.value?.close()
+    openRegionPicker('city')
+  } else if (regionStep.value === 'city') {
+    form.value.city = opt.name
+    cityId.value = opt.id
+    regionPopup.value?.close()
+    openRegionPicker('district')
+  } else if (regionStep.value === 'district') {
+    form.value.district = opt.name
+    regionPopup.value?.close()
+  }
 }
 
 const saveAddress = async () => {
@@ -197,7 +318,7 @@ const deleteAddress = (item) => {
 </script>
 
 <style scoped>
-.address-page { min-height: 100vh; background: #f5f5f5; padding-bottom: 120rpx; }
+.address-page { height: 100vh; overflow-y: auto; background: #f5f5f5; padding-bottom: 120rpx; box-sizing: border-box; }
 .empty-state { display: flex; flex-direction: column; align-items: center; padding: 200rpx 0; }
 .empty-text { color: #999; margin-top: 20rpx; }
 .address-item { background: #fff; margin: 20rpx; border-radius: 16rpx; padding: 24rpx; }
@@ -219,4 +340,12 @@ const deleteAddress = (item) => {
 .form-input { flex: 1; font-size: 28rpx; height: 60rpx; }
 .form-switch { display: flex; justify-content: space-between; align-items: center; padding: 20rpx 0; font-size: 28rpx; }
 .save-btn { margin-top: 30rpx; background: #007AFF; color: #fff; border-radius: 40rpx; }
+.region-row { flex: 1; display: flex; align-items: center; gap: 16rpx; padding: 10rpx 0; }
+.region-item { font-size: 28rpx; color: #333; }
+.region-item.placeholder { color: #999; }
+.region-popup { padding: 30rpx; max-height: 60vh; }
+.region-popup-title { font-size: 30rpx; font-weight: bold; margin-bottom: 24rpx; }
+.region-list { max-height: 50vh; }
+.region-opt { padding: 24rpx; font-size: 28rpx; border-bottom: 1rpx solid #f0f0f0; }
+.region-loading { padding: 40rpx; text-align: center; color: #999; font-size: 28rpx; }
 </style>

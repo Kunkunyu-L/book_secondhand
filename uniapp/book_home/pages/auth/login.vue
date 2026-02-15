@@ -1,41 +1,17 @@
 <template>
 	<view class="login-page">
-		<!-- 顶部书籍图标 -->
-		<!-- <view class="book-icon"></view> -->
-
-		<!-- 登录容器 -->
 		<view class="login-container">
-			<h2 class="login-title">欢迎回来</h2>
-
-			<!-- 手机号输入 -->
+			<text class="login-title">欢迎回来</text>
 			<view class="form-item">
-				<input 
-					type="text" 
-					placeholder="请输入用户名" 
-					v-model="username"
-					maxlength="11"
-					placeholder-class="placeholder-style"
-				/>
+				<input type="text" placeholder="请输入用户名" v-model="username" maxlength="11" placeholder-class="ph" />
 			</view>
-
-			<!-- 密码输入 -->
 			<view class="form-item">
-				<input 
-					:type="showPwd ? 'text' : 'password'" 
-					placeholder="请输入密码" 
-					v-model="password"
-					maxlength="16"
-					placeholder-class="placeholder-style"
-				/>
+				<input :type="showPwd ? 'text' : 'password'" placeholder="请输入密码" v-model="password" maxlength="16" placeholder-class="ph" />
 				<text class="pwd-action" @click="togglePwd">{{ showPwd ? '隐藏' : '显示' }}</text>
 			</view>
-
-			<!-- 登录按钮 -->
-			<button class="login-btn" @click="handleLogin">登录，继续淘书</button>
-
-			<!-- 注册跳转 -->
+			<button class="login-btn" @click="handleLogin">登录</button>
 			<view class="to-register">
-				还没有账号？<navigator url="/pages/auth/register" class="link">注册易书坊，开启换书生活</navigator>
+				还没有账号？<navigator url="/pages/auth/register" class="link">去注册</navigator>
 			</view>
 		</view>
 	</view>
@@ -44,16 +20,6 @@
 <script>
 import request from '@/untils/request.js';
 export default {
-	onLoad() {
-		uni.getSystemInfo({
-			success: (res) => {
-				// 导航栏高度（单位：px）
-				const navBarHeight = res.statusBarHeight + 44; 
-				// 给容器设置高度 = 视口高度 - 导航栏高度
-				this.containerHeight = `calc(100vh - ${navBarHeight}px)`;
-			}
-		});
-	},
 	data() {
 		return {
 			username: '',
@@ -91,95 +57,55 @@ export default {
 </script>
 
 <style scoped>
-/* 页面容器 */
 .login-page {
-	background: #f9fafc;
-	min-height: v-bind(containerHeight);
-	padding: 100rpx 30rpx;
+	background: #f5f5f5;
+	height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 60rpx 48rpx;
 	box-sizing: border-box;
-	position: relative;
 }
-
-/* 顶部 */
-
-/* 登录容器 */
 .login-container {
-	width: 80%;
+	width: 100%;
+	max-width: 560rpx;
 	background: #fff;
-	border-radius: 32rpx;
-	padding: 60rpx 30rpx;
-	box-shadow: 0 16rpx 48rpx rgba(149, 157, 165, 0.1);
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -65%);
+	border-radius: 24rpx;
+	padding: 64rpx 40rpx;
+	box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.06);
 }
-
-/* 标题 */
 .login-title {
-	font-size: 48rpx;
+	display: block;
+	font-size: 44rpx;
 	font-weight: 600;
 	text-align: center;
-	margin-bottom: 60rpx;
+	margin-bottom: 56rpx;
 	color: #333;
 }
-
-/* 表单项 */
 .form-item {
 	position: relative;
-	margin-bottom: 50rpx;
-	padding: 24rpx 32rpx;
-	border: 2rpx solid #e5f3ff;
-	border-radius: 16rpx;
-	background: #f7fbff;
+	margin-bottom: 32rpx;
+	padding: 24rpx 28rpx;
+	border: 1rpx solid #eee;
+	border-radius: 12rpx;
+	background: #fafafa;
 }
-.form-item input {
-	width: 100%;
-	font-size: 32rpx;
-	color: #333;
-	background: transparent;
-}
-.placeholder-style {
-	color: #a0cfff;
-	font-size: 32rpx;
-}
-
-/* 密码可见性按钮 */
-.pwd-action {
-	position: absolute;
-	right: 32rpx;
-	top: 28rpx;
-	font-size: 28rpx;
-	color: #66c2ff;
-}
-
-/* 登录按钮 */
+.form-item input { width: 100%; font-size: 30rpx; color: #333; background: transparent; }
+.ph { color: #999; font-size: 30rpx; }
+.pwd-action { position: absolute; right: 28rpx; top: 50%; transform: translateY(-50%); font-size: 26rpx; color: #007AFF; }
 .login-btn {
 	width: 100%;
-	height: 96rpx;
-	line-height: 96rpx;
-	background: linear-gradient(120deg, #66c2ff, #4da8ff);
+	height: 88rpx;
+	line-height: 88rpx;
+	background: #007AFF;
 	color: #fff;
 	border: none;
-	border-radius: 16rpx;
-	font-size: 32rpx;
+	border-radius: 12rpx;
+	font-size: 30rpx;
 	font-weight: 500;
-	box-shadow: 0 8rpx 24rpx rgba(102, 194, 255, 0.3);
+	margin-top: 16rpx;
 }
-.login-btn::after {
-	border: none;
-}
-
-/* 注册跳转 */
-.to-register {
-	text-align: center;
-	margin-top: 40rpx;
-	font-size: 28rpx;
-	color: #999;
-}
-.link {
-	color: #4da8ff;
-	font-weight: 500;
-	text-decoration: none;
-}
+.login-btn::after { border: none; }
+.to-register { text-align: center; margin-top: 36rpx; font-size: 26rpx; color: #999; }
+.link { color: #007AFF; font-weight: 500; text-decoration: none; }
 </style>

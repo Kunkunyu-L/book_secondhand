@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { getNotificationsApi, markNotificationReadApi, getConfigsApi } from '../api'
+import { getNotificationsApi, markNotificationReadApi, deleteNotificationApi, getConfigsApi } from '../api'
 import { connectSocket } from '../utils/socket'
 import { playOrderNotifySound, playChatNotifySound } from '../utils/notificationSound'
 import { ElNotification } from 'element-plus'
@@ -47,6 +47,25 @@ const markAllRead = async () => {
     await markNotificationReadApi({ id: 'all' })
     unreadCount.value = 0
     notifications.value.forEach(n => n.is_read = 1)
+  } catch { /* ignore */ }
+}
+
+const markOneRead = async (n: any, e: Event) => {
+  e.stopPropagation()
+  if (n.is_read) return
+  try {
+    await markNotificationReadApi({ id: n.id })
+    n.is_read = 1
+    if (unreadCount.value > 0) unreadCount.value--
+  } catch { /* ignore */ }
+}
+
+const deleteOne = async (n: any, e: Event) => {
+  e.stopPropagation()
+  try {
+    await deleteNotificationApi({ id: n.id })
+    notifications.value = notifications.value.filter((x: any) => x.id !== n.id)
+    if (!n.is_read && unreadCount.value > 0) unreadCount.value--
   } catch { /* ignore */ }
 }
 
@@ -208,10 +227,13 @@ const handleLogout = () => { authStore.logout(); router.push('/login') }
             </div>
             <el-scrollbar max-height="320px">
               <div v-if="notifications.length === 0" style="text-align:center;padding:20px;color:#909399">暂无通知</div>
-              <div v-for="n in notifications" :key="n.id" class="notify-item" :class="{ unread: !n.is_read }">
-                <div class="notify-title">{{ n.title }}</div>
-                <div class="notify-content">{{ n.content }}</div>
-                <div class="notify-time">{{ n.created_at }}</div>
+              <div v-for="n in notifications" :key="n.id" class="notify-item" :class="{ unread: !n.is_read }" @click="markOneRead(n, $event)">
+                <div class="notify-body">
+                  <div class="notify-title">{{ n.title }}</div>
+                  <div class="notify-content">{{ n.content }}</div>
+                  <div class="notify-time">{{ n.created_at }}</div>
+                </div>
+                <el-button type="danger" link size="small" class="notify-del" @click="deleteOne(n, $event)">删除</el-button>
               </div>
             </el-scrollbar>
           </el-popover>
@@ -251,10 +273,12 @@ const handleLogout = () => { authStore.logout(); router.push('/login') }
 .notify-icon:hover { color: #409EFF; }
 .notify-badge { cursor: pointer; }
 .notify-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #ebeef5; margin-bottom: 8px; }
-.notify-item { padding: 8px 4px; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
+.notify-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 8px 4px; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
 .notify-item.unread { background: #f0f9ff; }
 .notify-item:hover { background: #f5f7fa; }
+.notify-body { flex: 1; min-width: 0; }
 .notify-title { font-size: 13px; font-weight: 500; color: #303133; }
 .notify-content { font-size: 12px; color: #909399; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .notify-time { font-size: 11px; color: #c0c4cc; margin-top: 4px; }
+.notify-del { flex-shrink: 0; }
 </style>

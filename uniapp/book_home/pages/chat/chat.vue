@@ -4,7 +4,7 @@
     <view class="connecting-bar" v-if="!socketReady && (socket && !socket.connected)">
       <text class="connecting-text">连接中...请稍后</text>
     </view>
-    <!-- 消息列表 -->
+    <!-- 消息列表：仅此区域可滚动 -->
     <scroll-view scroll-y class="msg-list" :scroll-top="scrollTop" :scroll-into-view="scrollIntoView">
       <view class="msg-item" v-for="(m, idx) in messages" :key="m.id" :id="'msg-' + idx"
         :class="{ mine: m.sender_id == userId }">
@@ -19,10 +19,10 @@
       <view v-if="messages.length === 0" class="empty-msg">暂无消息，发送一条试试~</view>
     </scroll-view>
 
-    <!-- 输入区域 -->
+    <!-- 输入区域：固定在最底部，进入页面即见 -->
     <view class="input-bar">
       <input class="msg-input" v-model="inputText" placeholder="输入消息..." confirm-type="send"
-        @confirm="sendMessage" :adjust-position="true" />
+        @confirm="sendMessage" :adjust-position="false" />
       <view class="send-btn" :class="{ active: inputText.trim() }" @click="sendMessage">发送</view>
     </view>
   </view>
@@ -184,8 +184,8 @@ export default {
 </script>
 
 <style scoped>
-.chat-page { display: flex; flex-direction: column; height: 100vh; background: #f5f5f5; }
-.msg-list { flex: 1; padding: 20rpx; }
+.chat-page { position: relative; height: 100vh; background: #f5f5f5; box-sizing: border-box; }
+.msg-list { position: absolute; left: 0; right: 0; top: 0; bottom: 120rpx; padding: 20rpx; }
 .msg-item { margin-bottom: 20rpx; display: flex; }
 .msg-item.mine { justify-content: flex-end; }
 .msg-bubble { display: inline-block; max-width: 70%; padding: 16rpx 24rpx; border-radius: 16rpx;
@@ -196,10 +196,10 @@ export default {
 .msg-time { display: block; font-size: 20rpx; color: #bbb; margin-top: 6rpx; text-align: right; }
 .empty-msg { text-align: center; padding: 80rpx 0; color: #ccc; font-size: 26rpx; }
 
-.input-bar { display: flex; align-items: center; padding: 16rpx 20rpx; background: #fff;
-  border-top: 1rpx solid #eee; padding-bottom: calc(16rpx + env(safe-area-inset-bottom)); }
-.msg-input { flex: 1; height: 68rpx; background: #f5f5f5; border-radius: 34rpx; padding: 0 24rpx; font-size: 28rpx; }
-.send-btn { margin-left: 16rpx; padding: 12rpx 32rpx; background: #ddd; color: #999;
+.input-bar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 16rpx 20rpx; background: #fff;
+  border-top: 1rpx solid #eee; padding-bottom: calc(16rpx + env(safe-area-inset-bottom)); box-sizing: border-box; z-index: 10; }
+.msg-input { flex: 1; min-width: 0; height: 68rpx; background: #f5f5f5; border-radius: 34rpx; padding: 0 24rpx; font-size: 28rpx; }
+.send-btn { flex-shrink: 0; margin-left: 16rpx; padding: 12rpx 32rpx; background: #ddd; color: #999;
   border-radius: 34rpx; font-size: 28rpx; }
 .send-btn.active { background: #07c160; color: #fff; }
 

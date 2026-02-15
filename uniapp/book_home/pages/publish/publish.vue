@@ -69,7 +69,7 @@
       <view class="form-item-col">
         <text class="form-label">封面图片</text>
         <view class="img-list">
-          <image v-if="form.cover_img" :src="form.cover_img" class="preview-img" mode="aspectFill" @click="chooseCover"></image>
+          <image v-if="form.cover_img" :src="getImageUrl(form.cover_img)" class="preview-img" mode="aspectFill" @click="chooseCover"></image>
           <view v-else class="add-img" @click="chooseCover">
             <uni-icons type="plusempty" size="30" color="#ccc"></uni-icons>
             <text class="add-text">添加封面</text>
@@ -83,7 +83,7 @@
     </view>
 
     <button class="publish-btn" @click="submitPublish" :disabled="publishing">
-      {{ publishing ? '发布中...' : '发布图书' }}
+      {{ publishing ? (editId ? '保存中...' : '发布中...') : (editId ? '保存修改' : '发布图书') }}
     </button>
   </view>
 </template>
@@ -92,9 +92,12 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import request from '@/untils/request.js'
+import { getImageUrl } from '@/untils/config.js'
 
 const categories = ref([])
 const publishing = ref(false)
+const editId = ref(null)
+const editBookType = ref('user') // user | platform
 
 const conditionOptions = [
   { label: '全新', value: 10 },
@@ -115,12 +118,41 @@ const selectedCategoryName = computed(() => {
   return cat ? cat.name : ''
 })
 
-onLoad(() => { loadCategories() })
+onLoad((options) => {
+  loadCategories()
+  if (options?.id && options?.type) {
+    editId.value = options.id
+    editBookType.value = options.type === 'platform' ? 'platform' : 'user'
+    loadBookDetail(options.id, editBookType.value)
+  }
+})
 
 const loadCategories = async () => {
   try {
     const res = await request({ url: '/home/categories/level1', method: 'GET' })
     categories.value = res.data || []
+  } catch (e) {}
+}
+
+const loadBookDetail = async (id, type) => {
+  try {
+    const res = await request({ url: `/publish/book/detail?book_id=${id}&type=${type || 'user'}`, method: 'GET' })
+    const d = res.data || {}
+    form.value = {
+      title: d.title || '',
+      author: d.author || '',
+      isbn: d.isbn || '',
+      publisher: d.publisher || '',
+      publish_date: d.publish_date || '',
+      category: d.category ?? null,
+      tags: d.tags || '',
+      price: d.price != null ? String(d.price) : '',
+      original_price: d.original_price != null ? String(d.original_price) : '',
+      condition: d.condition ?? 8,
+      condition_desc: d.condition_desc || '',
+      cover_img: d.cover_img || '',
+      book_story: (d.book_story || d.description) || ''
+    }
   } catch (e) {}
 }
 
@@ -144,23 +176,29 @@ const submitPublish = async () => {
   if (!form.value.price) return uni.showToast({ title: '请输入售价', icon: 'none' })
 
   publishing.value = true
+  const payload = {
+    ...form.value,
+    price: Number(form.value.price),
+    original_price: Number(form.value.original_price) || Number(form.value.price)
+  }
   try {
-    await request({ url: '/publish/book', method: 'POST', data: {
-      ...form.value,
-      price: Number(form.value.price),
-      original_price: Number(form.value.original_price) || Number(form.value.price)
-    }})
-    uni.showToast({ title: '发布成功', icon: 'success' })
+    if (editId.value) {
+      await request({ url: '/publish/book', method: 'PUT', data: { book_id: editId.value, book_type: editBookType.value, ...payload } })
+      uni.showToast({ title: '保存成功', icon: 'success' })
+    } else {
+      await request({ url: '/publish/book', method: 'POST', data: payload })
+      uni.showToast({ title: '发布成功', icon: 'success' })
+    }
     setTimeout(() => { uni.navigateBack() }, 1000)
   } catch (e) {
-    console.error('发布失败', e)
+    console.error(editId.value ? '保存失败' : '发布失败', e)
   }
   publishing.value = false
 }
 </script>
 
 <style scoped>
-.publish-page { min-height: 100vh; background: #f5f5f5; padding: 20rpx; padding-bottom: 120rpx; }
+.publish-page { height: 100vh; overflow-y: auto; background: #f5f5f5; padding: 20rpx; padding-bottom: 120rpx; box-sizing: border-box; }
 .form-card { background: #fff; border-radius: 16rpx; padding: 10rpx 24rpx; margin-bottom: 20rpx; }
 .card-title { font-size: 30rpx; font-weight: bold; padding: 16rpx 0; border-bottom: 1rpx solid #f5f5f5; }
 .form-item { display: flex; align-items: center; padding: 20rpx 0; border-bottom: 1rpx solid #f5f5f5; }

@@ -150,49 +150,84 @@ exports.createOrder = (req, res) => {
   });
 };
 
-// 获取订单列表
-exports.getOrderList = (req, res) => {
-  const userId = req.auth.id;
-  const { status } = req.query; // 可选筛选
-  let sql = `
-    SELECT o.*, 
-      (SELECT JSON_ARRAYAGG(
-        JSON_OBJECT('title', oi.title, 'cover_img', oi.cover_img, 'price', oi.price, 'quantity', oi.quantity, 'book_id', oi.book_id, 'book_type', oi.book_type)
-      ) FROM order_items oi WHERE oi.order_id = o.id) AS items
-    FROM orders o WHERE o.user_id = ?
-  `;
-  const params = [userId];
-  if (status && status !== "all") {
-    sql += " AND o.status = ?";
-    params.push(status);
-  }
-  sql += " ORDER BY o.created_at DESC";
-
-  db.query(sql, params, (err, results) => {
-    if (err) return res.cc(err);
-    // 解析items JSON
-    results.forEach((r) => {
-      if (typeof r.items === "string") {
-        try { r.items = JSON.parse(r.items); } catch (e) { r.items = []; }
-      }
-      if (!r.items) r.items = [];
+// 获取订单列表（status: all/bought/sold，兼容 MySQL 5.5 无 JSON_ARRAYAGG）
+const attachOrderItems = (orders, done) => {
+  if (!orders || orders.length === 0) return done([]);
+  const ids = orders.map((o) => o.id);
+  const placeholders = ids.map(() => "?").join(",");
+  const sql = `SELECT order_id, title, cover_img, price, quantity, book_id, book_type FROM order_items WHERE order_id IN (${placeholders})`;
+  db.query(sql, ids, (err, rows) => {
+    if (err) return done(null, err);
+    const byOrder = {};
+    (rows || []).forEach((r) => {
+      if (!byOrder[r.order_id]) byOrder[r.order_id] = [];
+      byOrder[r.order_id].push({ title: r.title, cover_img: r.cover_img, price: r.price, quantity: r.quantity, book_id: r.book_id, book_type: r.book_type });
     });
-    res.send({ status: 200, message: "获取订单列表成功", data: results });
+    orders.forEach((o) => { o.items = byOrder[o.id] || []; });
+    done(orders);
   });
 };
 
-// 获取订单详情
+exports.getOrderList = (req, res) => {
+  const userId = req.auth.id;
+  const { status } = req.query;
+
+  if (status === "all") {
+    const boughtSql = `SELECT o.* FROM orders o WHERE o.user_id=? ORDER BY o.created_at DESC`;
+    const soldSql = `SELECT DISTINCT o.* FROM orders o JOIN order_items oi ON oi.order_id=o.id AND oi.seller_id=? ORDER BY o.created_at DESC`;
+    db.query(boughtSql, [userId], (err1, bought) => {
+      if (err1) return res.cc(err1);
+      db.query(soldSql, [userId], (err2, sold) => {
+        if (err2) return res.cc(err2);
+        const seen = new Set((bought || []).map((o) => o.id));
+        const merged = [...(bought || [])];
+        (sold || []).forEach((o) => { if (!seen.has(o.id)) { seen.add(o.id); merged.push(o); } });
+        merged.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        attachOrderItems(merged, (data, e) => {
+          if (e) return res.cc(e);
+          res.send({ status: 200, message: "获取订单列表成功", data });
+        });
+      });
+    });
+    return;
+  }
+
+  if (status === "sold") {
+    const sql = `SELECT DISTINCT o.* FROM orders o JOIN order_items oi ON oi.order_id=o.id AND oi.seller_id=? ORDER BY o.created_at DESC`;
+    db.query(sql, [userId], (err, results) => {
+      if (err) return res.cc(err);
+      attachOrderItems(results || [], (data, e) => {
+        if (e) return res.cc(e);
+        res.send({ status: 200, message: "获取订单列表成功", data });
+      });
+    });
+    return;
+  }
+
+  // bought：我买到的
+  const sql = `SELECT o.* FROM orders o WHERE o.user_id=? ORDER BY o.created_at DESC`;
+  db.query(sql, [userId], (err, results) => {
+    if (err) return res.cc(err);
+    attachOrderItems(results || [], (data, e) => {
+      if (e) return res.cc(e);
+      res.send({ status: 200, message: "获取订单列表成功", data });
+    });
+  });
+};
+
+// 获取订单详情（支持买家、卖家查看）
 exports.getOrderDetail = (req, res) => {
   const userId = req.auth.id;
   const { order_id } = req.query;
   if (!order_id) return res.cc("缺少参数", 400);
 
-  const sql = "SELECT * FROM orders WHERE id=? AND user_id=?";
-  db.query(sql, [order_id, userId], (err, orderResults) => {
+  const sql = `SELECT o.* FROM orders o WHERE o.id=? AND (o.user_id=? OR EXISTS (SELECT 1 FROM order_items oi WHERE oi.order_id=o.id AND oi.seller_id=?))`;
+  db.query(sql, [order_id, userId, userId], (err, orderResults) => {
     if (err) return res.cc(err);
     if (orderResults.length === 0) return res.cc("订单不存在", 404);
 
     const order = orderResults[0];
+    order.role = order.user_id == userId ? "buyer" : "seller";
     if (order.address_snapshot && typeof order.address_snapshot === "string") {
       try { order.address_snapshot = JSON.parse(order.address_snapshot); } catch (e) {}
     }
@@ -206,29 +241,41 @@ exports.getOrderDetail = (req, res) => {
   });
 };
 
-// 更新订单状态
+// 更新订单状态（买家：paid/cancelled/completed；卖家：shipped）
 exports.updateOrderStatus = (req, res) => {
   const userId = req.auth.id;
   const { order_id, status: newStatus } = req.body;
   const validStatus = ["paid", "shipped", "completed", "cancelled"];
   if (!order_id || !validStatus.includes(newStatus)) return res.cc("参数错误", 400);
 
-  // 状态时间字段映射
-  const timeField = {
-    paid: "pay_time",
-    shipped: "ship_time",
-    completed: "receive_time",
-  };
+  const timeField = { paid: "pay_time", shipped: "ship_time", completed: "receive_time" };
 
-  let sql = `UPDATE orders SET status=?`;
-  const params = [newStatus];
-  if (timeField[newStatus]) {
-    sql += `, ${timeField[newStatus]}=NOW()`;
-  }
-  sql += ` WHERE id=? AND user_id=?`;
-  params.push(order_id, userId);
+  db.query("SELECT user_id FROM orders WHERE id=?", [order_id], (err0, orderRows) => {
+    if (err0) return res.cc(err0);
+    if (!orderRows || orderRows.length === 0) return res.cc("订单不存在", 404);
+    const isBuyer = orderRows[0].user_id == userId;
 
-  db.query(sql, params, (err, results) => {
+    if (newStatus === "shipped") {
+      if (isBuyer) return res.cc("仅卖家可操作发货", 403);
+      db.query("SELECT 1 FROM order_items WHERE order_id=? AND seller_id=? LIMIT 1", [order_id, userId], (errS, sellerRows) => {
+        if (errS) return res.cc(errS);
+        if (!sellerRows || sellerRows.length === 0) return res.cc("无权限操作", 403);
+        doUpdate();
+      });
+    } else {
+      if (!isBuyer) return res.cc("仅买家可操作", 403);
+      doUpdate();
+    }
+  });
+
+  function doUpdate() {
+    let sql = `UPDATE orders SET status=?`;
+    const params = [newStatus];
+    if (timeField[newStatus]) sql += `, ${timeField[newStatus]}=NOW()`;
+    sql += ` WHERE id=?`;
+    params.push(order_id);
+
+    db.query(sql, params, (err, results) => {
     if (err) return res.cc(err);
     if (results.affectedRows === 0) return res.cc("订单不存在", 404);
 
@@ -278,22 +325,44 @@ exports.updateOrderStatus = (req, res) => {
 
     res.send({ status: 200, message: "订单状态更新成功" });
   });
+  }
 };
 
-// 获取各状态订单数量
+// 获取各状态订单数量（全部=买+卖，我发布的，我买到的，我卖出的，以及各状态数量）
 exports.getOrderCount = (req, res) => {
   const userId = req.auth.id;
   const sql = `
     SELECT 
-      COUNT(*) AS total,
-      SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) AS pending,
-      SUM(CASE WHEN status='paid' THEN 1 ELSE 0 END) AS paid,
-      SUM(CASE WHEN status='shipped' THEN 1 ELSE 0 END) AS shipped,
-      SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) AS completed
-    FROM orders WHERE user_id=?
+      (SELECT COUNT(*) FROM orders WHERE user_id=?) AS my_bought,
+      (SELECT COUNT(DISTINCT o.id) FROM orders o
+        JOIN order_items oi ON oi.order_id = o.id AND oi.seller_id = ?) AS my_sold,
+      (SELECT COUNT(*) FROM orders WHERE user_id=? AND status='pending') AS pending,
+      (SELECT COUNT(*) FROM orders WHERE user_id=? AND status='paid') AS paid,
+      (SELECT COUNT(*) FROM orders WHERE user_id=? AND status='shipped') AS shipped,
+      (SELECT COUNT(*) FROM orders WHERE user_id=? AND status='completed') AS completed
   `;
-  db.query(sql, [userId], (err, results) => {
+  db.query(sql, [userId, userId, userId, userId, userId, userId], (err, results) => {
     if (err) return res.cc(err);
-    res.send({ status: 200, message: "获取订单数量成功", data: results[0] });
+    const bought = results[0]?.my_bought || 0;
+    const sold = results[0]?.my_sold || 0;
+    const pending = results[0]?.pending || 0;
+    const paid = results[0]?.paid || 0;
+    const shipped = results[0]?.shipped || 0;
+    const completed = results[0]?.completed || 0;
+    db.query(
+      "SELECT COUNT(*) AS c FROM user_book WHERE user_id=? UNION ALL SELECT COUNT(*) FROM platform_book WHERE user_id=?",
+      [userId, userId],
+      (err2, r2) => {
+        if (err2) return res.cc(err2);
+        const ub = (r2[0]?.c || 0);
+        const pb = (r2[1]?.c || 0);
+        const my_published = ub + pb;
+        res.send({
+          status: 200,
+          message: "获取订单数量成功",
+          data: { total: bought + sold, my_published, my_bought: bought, my_sold: sold, pending, paid, shipped, completed },
+        });
+      }
+    );
   });
 };

@@ -1,32 +1,21 @@
 <template>
 	<view class="page-container">
-		<!-- 轮播图（后台管理配置） -->
-		<swiper class="banner-swiper" indicator-dots autoplay circular :interval="4000" v-if="banners.length > 0">
+		<!-- 轮播图（后台管理配置，无数据时省略） -->
+		<swiper v-if="banners.length > 0" class="banner-swiper" indicator-dots autoplay circular :interval="4000">
 			<swiper-item v-for="item in banners" :key="item.id" @click="onBannerClick(item)">
 				<image :src="item.image_url" mode="aspectFill" class="banner-img"></image>
 			</swiper-item>
 		</swiper>
-		<view class="banner" @click="goMarket" v-else>
-			<view class="banner-content">
-				<text class="banner-title">发现好书</text>
-				<text class="banner-desc">让每本书都发挥最大价值</text>
-			</view>
-		</view>
 
-		<!-- 分类导航 -->
+		<!-- 分类导航：两排，一排4个，第二排第4个为更多（超过8个时） -->
 		<view class="category-container">
-			<view class="category-list">
-				<view class="category-item" v-for="(item,index) in category" :key="item.id" @click="goCategory(item.id)">
+			<view class="category-grid">
+				<view class="category-item" v-for="(item, index) in displayCategories" :key="item.id || 'more'" @click="item.isMore ? goMarket() : goCategory(item.id)">
 					<view class="category-icon">
-						<image :src="item.img" mode="aspectFit" class="category-img"></image>
+						<image v-if="item.isMore" src="/static/img/more.png" mode="aspectFit" class="category-img"></image>
+						<image v-else :src="item.img" mode="aspectFit" class="category-img"></image>
 					</view>
-					<text class="category-name">{{item.name}}</text>
-				</view>
-				<view class="category-item" @click="goMarket">
-					<view class="category-icon">
-						<image src="/static/img/more.png" mode="aspectFit" class="category-img"></image>
-					</view>
-					<text class="category-name">更多</text>
+					<text class="category-name">{{ item.name }}</text>
 				</view>
 			</view>
 		</view>
@@ -93,7 +82,11 @@
 				<text class="load-more-text" @click="goMarket">查看更多 →</text>
 			</view>
 		</view>
-		
+
+		<!-- 右下角浮动发布按钮 -->
+		<view class="fab-publish" @click="goPublish">
+			<text class="fab-icon">+</text>
+		</view>
 	</view>
 </template>
 
@@ -110,6 +103,19 @@ export default {
       observers: [],
       userBooks: [],
       banners: []
+    }
+  },
+  computed: {
+    // 两排4列：超过8个时显示前7个+更多，否则显示全部（不足8个时补更多）
+    displayCategories() {
+      const list = this.category || []
+      if (list.length > 8) {
+        return [...list.slice(0, 7), { id: 'more', name: '更多', isMore: true }]
+      }
+      if (list.length < 8) {
+        return [...list, { id: 'more', name: '更多', isMore: true }]
+      }
+      return list
     }
   },
   onLoad() {
@@ -215,5 +221,36 @@ export default {
 .banner-img {
   width: 100%;
   height: 360rpx;
+}
+.category-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+.category-item {
+  width: 25%;
+  box-sizing: border-box;
+}
+.fab-publish {
+  position: fixed;
+  right: 24rpx;
+  bottom: 120rpx;
+  width: 96rpx;
+  height: 96rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 20rpx rgba(102, 126, 234, 0.4);
+  z-index: 100;
+}
+.fab-publish:active {
+  transform: scale(0.95);
+}
+.fab-icon {
+  font-size: 48rpx;
+  font-weight: 300;
+  color: #fff;
+  line-height: 1;
 }
 </style>

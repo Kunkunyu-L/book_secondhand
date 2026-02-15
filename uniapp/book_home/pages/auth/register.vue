@@ -1,80 +1,26 @@
 <template>
 	<view class="register-page">
-		<!-- 顶部书籍图标 -->
-		<!-- <view class="book-icon"></view> -->
-
-		<!-- 注册容器 -->
 		<view class="register-container">
-			<h2 class="register-title">加入易书坊</h2>
-			
-			<!-- 用户名输入 -->
+			<text class="register-title">注册</text>
 			<view class="form-item">
-				<input 
-					type="text" 
-					placeholder="请输入用户名" 
-					v-model="username"
-					maxlength="11"
-					placeholder-class="placeholder-style"
-				/>
+				<input type="text" placeholder="请输入用户名" v-model="username" maxlength="11" placeholder-class="ph" />
 			</view>
-			
-			
-			<!-- 密码输入 -->
 			<view class="form-item">
-				<input 
-					type="password" 
-					placeholder="请设置密码" 
-					v-model="password"
-					maxlength="16"
-					placeholder-class="placeholder-style"
-				/>
+				<input type="password" placeholder="请设置密码" v-model="password" maxlength="16" placeholder-class="ph" />
 			</view>
-			
-			<!-- 确认密码输入 -->
 			<view class="form-item">
-				<input 
-					type="password" 
-					placeholder="请确认密码" 
-					v-model="confirmPwd"
-					maxlength="16"
-					placeholder-class="placeholder-style"
-				/>
+				<input type="password" placeholder="请确认密码" v-model="confirmPwd" maxlength="16" placeholder-class="ph" />
 			</view>
-			
-			<!-- 手机号输入 -->
 			<view class="form-item">
-				<input 
-					type="number" 
-					placeholder="请输入手机号" 
-					v-model="phone"
-					maxlength="11"
-					placeholder-class="placeholder-style"
-				/>
+				<input type="number" placeholder="请输入手机号" v-model="phone" maxlength="11" placeholder-class="ph" />
 			</view>
-
-			<!-- 验证码输入 -->
 			<view class="form-item">
-				<input 
-					type="text" 
-					placeholder="请输入6位验证码" 
-					v-model="code"
-					maxlength="6"
-					placeholder-class="placeholder-style"
-				/>
-				<text 
-					class="code-action" 
-					@click="getCode"
-					:class="{ disabled: codeDisabled }"
-				>{{ codeText }}</text>
+				<input type="text" placeholder="请输入6位验证码" v-model="code" maxlength="6" placeholder-class="ph" />
+				<text class="code-action" @click="getCode" :class="{ disabled: codeDisabled }">{{ codeText }}</text>
 			</view>
-
-
-			<!-- 注册按钮 -->
-			<button class="register-btn" @click="handleRegister">注册，交换你的闲置书籍</button>
-
-			<!-- 登录跳转 -->
+			<button class="register-btn" @click="handleRegister">注册</button>
 			<view class="to-login">
-				已有账号？<navigator url="/pages/auth/login" class="link">登录，发现更多好书</navigator>
+				已有账号？<navigator url="/pages/auth/login" class="link">去登录</navigator>
 			</view>
 		</view>
 	</view>
@@ -83,16 +29,6 @@
 <script>
 import request from '@/untils/request.js';
 export default {
-	onLoad() {
-		uni.getSystemInfo({
-			success: (res) => {
-				// 导航栏高度（单位：px）
-				const navBarHeight = res.statusBarHeight + 44; 
-				// 给容器设置高度 = 视口高度 - 导航栏高度
-				this.containerHeight = `calc(100vh - ${navBarHeight}px)`;
-			}
-		});
-	},
 	data() {
 		return {
 			username:'',
@@ -160,99 +96,56 @@ export default {
 </script>
 
 <style scoped>
-/* 页面容器 */
 .register-page {
-	background: #f9fafc;
-	min-height: v-bind(containerHeight);
+	background: #f5f5f5;
+	height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 40rpx 48rpx;
 	box-sizing: border-box;
-	padding: 40rpx 30rpx;
-	position: relative;
 }
-
-/* 顶部*/
-
-/* 注册容器 */
 .register-container {
-	width: 80%;
+	width: 100%;
+	max-width: 560rpx;
 	background: #fff;
-	border-radius: 32rpx;
-	padding: 60rpx 30rpx;
-	box-shadow: 0 16rpx 48rpx rgba(149, 157, 165, 0.1);
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%,-55%);
+	border-radius: 24rpx;
+	padding: 56rpx 40rpx;
+	box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.06);
 }
-
-/* 标题 */
 .register-title {
-	font-size: 48rpx;
+	display: block;
+	font-size: 44rpx;
 	font-weight: 600;
 	text-align: center;
-	margin-bottom: 60rpx;
+	margin-bottom: 48rpx;
 	color: #333;
 }
-
-/* 表单项（与登录页一致） */
 .form-item {
 	position: relative;
-	margin-bottom: 50rpx;
-	padding: 24rpx 32rpx;
-	border: 2rpx solid #e5f3ff;
-	border-radius: 16rpx;
-	background: #f7fbff;
+	margin-bottom: 28rpx;
+	padding: 24rpx 28rpx;
+	border: 1rpx solid #eee;
+	border-radius: 12rpx;
+	background: #fafafa;
 }
-.form-item input {
-	width: 100%;
-	font-size: 32rpx;
-	color: #333;
-	background: transparent;
-}
-.placeholder-style {
-	color: #a0cfff;
-	font-size: 32rpx;
-}
-
-/* 验证码按钮 */
-.code-action {
-	position: absolute;
-	right: 32rpx;
-	top: 28rpx;
-	font-size: 28rpx;
-	color: #66c2ff;
-}
-.code-action.disabled {
-	color: #ccc;
-	pointer-events: none;
-}
-
-/* 注册按钮 */
+.form-item input { width: 100%; font-size: 30rpx; color: #333; background: transparent; }
+.ph { color: #999; font-size: 30rpx; }
+.code-action { position: absolute; right: 28rpx; top: 50%; transform: translateY(-50%); font-size: 26rpx; color: #007AFF; }
+.code-action.disabled { color: #ccc; pointer-events: none; }
 .register-btn {
 	width: 100%;
-	height: 96rpx;
-	line-height: 96rpx;
-	background: linear-gradient(120deg, #66c2ff, #4da8ff);
+	height: 88rpx;
+	line-height: 88rpx;
+	background: #007AFF;
 	color: #fff;
 	border: none;
-	border-radius: 16rpx;
-	font-size: 32rpx;
+	border-radius: 12rpx;
+	font-size: 30rpx;
 	font-weight: 500;
-	box-shadow: 0 8rpx 24rpx rgba(102, 194, 255, 0.3);
+	margin-top: 16rpx;
 }
-.register-btn::after {
-	border: none;
-}
-
-/* 登录跳转 */
-.to-login {
-	text-align: center;
-	margin-top: 40rpx;
-	font-size: 28rpx;
-	color: #999;
-}
-.link {
-	color: #4da8ff;
-	font-weight: 500;
-	text-decoration: none;
-}
+.register-btn::after { border: none; }
+.to-login { text-align: center; margin-top: 36rpx; font-size: 26rpx; color: #999; }
+.link { color: #007AFF; font-weight: 500; text-decoration: none; }
 </style>

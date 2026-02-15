@@ -151,3 +151,12 @@ exports.markNotificationRead = async (req, res) => {
     res.send({ status: 200, message: "已标记已读" });
   } catch (err) { res.cc(err); }
 };
+
+exports.deleteNotification = async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (!id) return res.cc("参数不完整", 400);
+    await query("DELETE FROM notification WHERE id=?", [id]);
+    res.send({ status: 200, message: "已删除" });
+  } catch (err) { res.cc(err); }
+};

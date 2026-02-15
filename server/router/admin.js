@@ -130,5 +130,6 @@ router.delete("/notification-templates", systemHandler.deleteNotificationTemplat
 router.get("/notifications", systemHandler.getNotifications);
 router.post("/notifications", systemHandler.sendNotification);
 router.put("/notifications/read", systemHandler.markNotificationRead);
+router.delete("/notifications", systemHandler.deleteNotification);
 
 module.exports = router;

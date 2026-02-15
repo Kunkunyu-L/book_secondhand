@@ -5,6 +5,12 @@ const publishHandler = require("../router_handler/publish");
 // 发布图书（用户卖书）
 router.post("/book", publishHandler.publishBook);
 
+// 获取单本用户图书（编辑用）
+router.get("/book/detail", publishHandler.getBookDetail);
+
+// 更新用户图书（编辑）
+router.put("/book", publishHandler.updateBook);
+
 // 获取我发布的图书
 router.get("/mybooks", publishHandler.getMyBooks);
 

@@ -6,8 +6,8 @@
       <button class="publish-btn" @click="goPublish">去发布</button>
     </view>
 
-    <view class="book-item" v-for="item in bookList" :key="item.id">
-      <image :src="item.cover_img || '/static/common.jpg'" class="book-img" mode="aspectFill"></image>
+    <view class="book-item" v-for="item in bookList" :key="(item.book_type || 'user') + '_' + item.id">
+      <image :src="getImageUrl(item.cover_img)" class="book-img" mode="aspectFill"></image>
       <view class="book-info">
         <text class="book-title">{{ item.title }}</text>
         <text class="book-author">{{ item.author }}</text>
@@ -17,6 +17,7 @@
         </view>
       </view>
       <view class="book-actions">
+        <button class="action-btn edit-btn" @click="editBook(item)">编辑</button>
         <button 
           class="action-btn" 
           :class="item.status === 'onsale' ? 'offline-btn' : 'online-btn'"
@@ -24,7 +25,7 @@
         >
           {{ item.status === 'onsale' ? '下架' : '上架' }}
         </button>
-        <button class="action-btn delete-btn" @click="deleteBook(item)">删除</button>
+        <button v-if="item.book_type === 'user'" class="action-btn delete-btn" @click="deleteBook(item)">删除</button>
       </view>
     </view>
 
@@ -39,6 +40,7 @@
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import request from '@/untils/request.js'
+import { getImageUrl } from '@/untils/config.js'
 
 const bookList = ref([])
 const loading = ref(false)
@@ -48,7 +50,7 @@ onShow(() => { loadBooks() })
 const loadBooks = async () => {
   loading.value = true
   try {
-    const res = await request({ url: '/publish/mybooks', method: 'GET' })
+    const res = await request({ url: `/publish/mybooks?_t=${Date.now()}`, method: 'GET' })
     bookList.value = res.data || []
   } catch (e) {}
   loading.value = false
@@ -61,8 +63,9 @@ const statusText = (s) => {
 
 const toggleStatus = async (item) => {
   const newStatus = item.status === 'onsale' ? 'offline' : 'onsale'
+  const bookType = item.book_type || 'user'
   try {
-    await request({ url: '/publish/book/status', method: 'PUT', data: { book_id: item.id, status: newStatus } })
+    await request({ url: '/publish/book/status', method: 'PUT', data: { book_id: item.id, book_type: bookType, status: newStatus } })
     item.status = newStatus
     uni.showToast({ title: '操作成功', icon: 'success' })
   } catch (e) {}
@@ -84,11 +87,16 @@ const deleteBook = (item) => {
   })
 }
 
+const editBook = (item) => {
+  const type = item.book_type || 'user'
+  uni.navigateTo({ url: `/pages/publish/publish?id=${item.id}&type=${type}` })
+}
+
 const goPublish = () => { uni.navigateTo({ url: '/pages/publish/publish' }) }
 </script>
 
 <style scoped>
-.mybooks-page { min-height: 100vh; background: #f5f5f5; padding-bottom: 120rpx; }
+.mybooks-page { height: 100vh; overflow-y: auto; background: #f5f5f5; padding-bottom: 120rpx; box-sizing: border-box; }
 .empty-state { display: flex; flex-direction: column; align-items: center; padding: 200rpx 0; }
 .empty-text { color: #999; margin-top: 20rpx; font-size: 28rpx; }
 .publish-btn { margin-top: 30rpx; background: #007AFF; color: #fff; border-radius: 30rpx; font-size: 26rpx; }
@@ -106,6 +114,7 @@ const goPublish = () => { uni.navigateTo({ url: '/pages/publish/publish' }) }
 .book-actions { display: flex; flex-direction: column; gap: 10rpx; flex-shrink: 0; }
 .action-btn { font-size: 22rpx; padding: 6rpx 20rpx; border-radius: 20rpx; border: 1rpx solid #ddd; background: #fff; line-height: 1.5; }
 .online-btn { color: #52c41a; border-color: #52c41a; }
+.edit-btn { color: #007AFF; border-color: #007AFF; }
 .offline-btn { color: #faad14; border-color: #faad14; }
 .delete-btn { color: #ff4d4f; border-color: #ff4d4f; }
 .fab-btn { position: fixed; right: 40rpx; bottom: 100rpx; width: 96rpx; height: 96rpx; border-radius: 50%; background: #007AFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4rpx 20rpx rgba(0,122,255,0.4); }

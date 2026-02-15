@@ -65,10 +65,8 @@ import request from '@/untils/request.js'
 
 const tabs = ref([
   { label: '全部', value: 'all', count: 0 },
-  { label: '待付款', value: 'pending', count: 0 },
-  { label: '待发货', value: 'paid', count: 0 },
-  { label: '待收货', value: 'shipped', count: 0 },
-  { label: '已完成', value: 'completed', count: 0 }
+  { label: '我买到的', value: 'bought', count: 0 },
+  { label: '我卖出的', value: 'sold', count: 0 }
 ])
 
 const currentTab = ref('all')
@@ -102,10 +100,9 @@ const loadCount = async () => {
   try {
     const res = await request({ url: '/order/count', method: 'GET' })
     const d = res.data || {}
-    tabs.value[1].count = d.pending || 0
-    tabs.value[2].count = d.paid || 0
-    tabs.value[3].count = d.shipped || 0
-    tabs.value[4].count = d.completed || 0
+    tabs.value[0].count = d.total || 0
+    tabs.value[1].count = d.my_bought || 0
+    tabs.value[2].count = d.my_sold || 0
   } catch (e) {}
 }
 

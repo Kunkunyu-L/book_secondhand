@@ -40,28 +40,16 @@
       </view>
     </view>
 
-    <!-- 卖家信息 -->
+    <!-- 卖家信息：仅展示昵称、信用分、头像 -->
     <view class="seller-card" v-if="bookInfo.nickname">
       <view class="card-title">卖家信息</view>
       <view class="seller-content">
-        <view class="seller-main">
-          <view class="seller-avatar">
-            <image :src="bookInfo.avatar || '/static/common.jpg'" mode="aspectFill"></image>
-          </view>
-          <view class="seller-details">
-            <text class="seller-name">{{bookInfo.nickname}}</text>
-            <view class="seller-stats">
-              <view class="stat-item">
-                <text class="stat-value">{{bookInfo.credit_score || 100}}</text>
-                <text class="stat-label">信用分</text>
-              </view>
-            </view>
-          </view>
+        <view class="seller-avatar">
+          <image :src="bookInfo.avatar || '/static/common.jpg'" mode="aspectFill"></image>
         </view>
-        <view class="seller-credit">
-          <view class="credit-bar">
-            <view class="credit-progress" :style="{width: (bookInfo.credit_score || 100) + '%'}"></view>
-          </view>
+        <view class="seller-details">
+          <text class="seller-name">{{bookInfo.nickname}}</text>
+          <text class="seller-credit">{{bookInfo.credit_score || 100}} 信用分</text>
         </view>
       </view>
     </view>

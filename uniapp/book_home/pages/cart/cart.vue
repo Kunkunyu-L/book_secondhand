@@ -1,12 +1,12 @@
 <template>
-  <view class="cart-page">
+  <view class="cart-page" :class="{ 'cart-page--empty': cartList.length === 0 }">
 	  <!-- 编辑按钮 -->
 	  <view v-if="cartList.length > 0" class="edit-btn-container">
 	    <button class="edit-btn" @click="toggleEditMode">
 	      {{ isEditMode ? '完成' : '编辑' }}
 	    </button>
 	  </view>
-    <!-- 空购物车状态 -->
+    <!-- 空购物车状态：占满一屏、不可滑动 -->
     <view v-if="cartList.length === 0" class="empty-cart">
       <uni-icons type="cart" size="120" color="#C0C0C0" />
       <text class="empty-text">购物车还是空的</text>

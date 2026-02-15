@@ -68,10 +68,15 @@
 
     <!-- 底部操作 -->
     <view class="action-bar" v-if="showActions">
-      <button v-if="order.status === 'pending'" class="action-btn cancel-btn" @click="cancelOrder">取消订单</button>
-      <button v-if="order.status === 'pending'" class="action-btn pay-btn" @click="payOrder">去付款</button>
-      <button v-if="order.status === 'shipped'" class="action-btn pay-btn" @click="confirmReceive">确认收货</button>
-      <button v-if="canRefund" class="action-btn refund-btn" @click="applyRefund">申请退款</button>
+      <!-- 买家操作 -->
+      <template v-if="order.role === 'buyer'">
+        <button v-if="order.status === 'pending'" class="action-btn cancel-btn" @click="cancelOrder">取消订单</button>
+        <button v-if="order.status === 'pending'" class="action-btn pay-btn" @click="payOrder">去付款</button>
+        <button v-if="order.status === 'shipped'" class="action-btn pay-btn" @click="confirmReceive">确认收货</button>
+        <button v-if="canRefund" class="action-btn refund-btn" @click="applyRefund">申请退款</button>
+      </template>
+      <!-- 卖家操作 -->
+      <button v-if="order.role === 'seller' && order.status === 'paid'" class="action-btn pay-btn" @click="shipOrder">发货</button>
     </view>
   </view>
 </template>
@@ -144,7 +149,10 @@ const cancelOrder = () => {
 }
 
 const showActions = computed(() => {
-  return ['pending', 'paid', 'shipped', 'completed'].includes(order.value.status)
+  const s = order.value.status
+  if (!s) return false
+  if (order.value.role === 'seller') return s === 'paid'
+  return ['pending', 'paid', 'shipped', 'completed'].includes(s)
 })
 
 const canRefund = computed(() => {
@@ -171,6 +179,14 @@ const confirmReceive = () => {
       }
     }
   })
+}
+
+const shipOrder = async () => {
+  try {
+    await request({ url: '/order/status', method: 'PUT', data: { order_id: order.value.id, status: 'shipped' } })
+    uni.showToast({ title: '已发货', icon: 'success' })
+    loadDetail()
+  } catch (e) {}
 }
 </script>
 

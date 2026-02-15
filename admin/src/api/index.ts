@@ -148,5 +148,6 @@ export const deleteNotificationTemplateApi = (data: any) => http.delete('/admin/
 export const getNotificationsApi = (params?: any) => http.get('/admin/notifications', { params })
 export const sendNotificationApi = (data: any) => http.post('/admin/notifications', data)
 export const markNotificationReadApi = (data: any) => http.put('/admin/notifications/read', data)
+export const deleteNotificationApi = (data: any) => http.delete('/admin/notifications', { data })
 
 export default http

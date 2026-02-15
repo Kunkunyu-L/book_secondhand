@@ -171,6 +171,12 @@
 	  		"selectedIconPath": "/static/img/cart1.png",
 	    "text": "购物车"
 	  },
+	  {
+	    "pagePath": "pages/chat/sessions",
+	  		"iconPath": "/static/img/mes.png",
+	  		"selectedIconPath": "/static/img/mes1.png",
+	    "text": "消息"
+	  },
       {
         "pagePath": "pages/mine/home",
 		"iconPath": "/static/img/my.png",

@@ -17,27 +17,23 @@
       </view>
     </view>
 
-    <!-- 数据统计卡片 -->
+    <!-- 数据统计卡片：全部订单、我发布的、我买到的、我卖出的 -->
     <view class="data-card">
       <view class="data-item" @click="goToOrder('all')">
         <view class="data-value">{{ orderCount.total || 0 }}</view>
         <view class="data-label">全部订单</view>
       </view>
-      <view class="data-item" @click="goToOrder('pending')">
-        <view class="data-value">{{ orderCount.pending || 0 }}</view>
-        <view class="data-label">待付款</view>
+      <view class="data-item" @click="goToMyBooks">
+        <view class="data-value">{{ orderCount.my_published || 0 }}</view>
+        <view class="data-label">我发布的</view>
       </view>
-      <view class="data-item" @click="goToOrder('paid')">
-        <view class="data-value">{{ orderCount.paid || 0 }}</view>
-        <view class="data-label">待发货</view>
+      <view class="data-item" @click="goToOrder('bought')">
+        <view class="data-value">{{ orderCount.my_bought || 0 }}</view>
+        <view class="data-label">我买到的</view>
       </view>
-      <view class="data-item" @click="goToOrder('shipped')">
-        <view class="data-value">{{ orderCount.shipped || 0 }}</view>
-        <view class="data-label">待收货</view>
-      </view>
-      <view class="data-item" @click="goToOrder('completed')">
-        <view class="data-value">{{ orderCount.completed || 0 }}</view>
-        <view class="data-label">已完成</view>
+      <view class="data-item" @click="goToOrder('sold')">
+        <view class="data-value">{{ orderCount.my_sold || 0 }}</view>
+        <view class="data-label">我卖出的</view>
       </view>
     </view>
 
@@ -134,8 +130,6 @@
       </view>
     </view>
 
-    <!-- 退出登录按钮 -->
-    <button class="logout-btn" @click="showLogoutModal" v-show="token">退出登录</button>
   </view>
 </template>
 
@@ -274,8 +268,12 @@ const showLogoutModal = () => {
 .my-page {
   width: 100%;
   min-height: 100vh;
+  height: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   background-color: #f8f8f8;
-  padding-bottom: 30rpx;
+  padding-bottom: calc(50px + 32rpx);
+  box-sizing: border-box;
 }
 .user-header {
   display: flex;
@@ -371,16 +369,5 @@ const showLogoutModal = () => {
   padding: 2rpx 10rpx;
   border-radius: 20rpx;
   margin-right: 8rpx;
-}
-.logout-btn {
-  width: calc(100% - 40rpx);
-  height: 80rpx;
-  line-height: 80rpx;
-  background-color: #fff;
-  color: #FF5722;
-  border: 1px solid #FF5722;
-  border-radius: 40rpx;
-  font-size: 28rpx;
-  margin: 40rpx 20rpx 0;
 }
 </style>

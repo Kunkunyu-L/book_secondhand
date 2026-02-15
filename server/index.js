@@ -32,6 +32,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// 省市区代理（免认证，解决腾讯地图 CORS）
+const regionRouter = require("./router/region");
+app.use("/region", regionRouter);
+
 // 引入 JWT 验证模块
 const { jwtAuth, jwtErrorHandler } = require("./middlewar/jwtAuth");
 // 注册 JWT 验证中间件（先验证 token）
