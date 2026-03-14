@@ -1,0 +1,105 @@
+/* Admin 白底中性主题：去 AI 味，偏后台/编辑风格，略增层次 */
+:root {
+  --admin-bg: #ffffff;
+  --admin-bg-page: #f1f3f5;
+  --admin-border: #e2e6ea;
+  --admin-border-light: #eef0f3;
+  --admin-text: #1f2937;
+  --admin-text-secondary: #5c6370;
+  --admin-text-muted: #8c95a0;
+  --admin-accent: #374151;
+  --admin-hover: #f0f2f5;
+  --admin-active-bg: #eef1f5;
+  --admin-sidebar-bg: #fafbfc;
+  --admin-card-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  --admin-card-border: 1px solid #e8eaed;
+}
+
+/* Element Plus 主色改为中性灰，弱化蓝 */
+html {
+  --el-color-primary: #374151;
+  --el-color-primary-light-3: #6b7280;
+  --el-color-primary-light-5: #9ca3af;
+  --el-color-primary-light-7: #d1d5db;
+  --el-color-primary-light-9: #f3f4f6;
+  --el-color-primary-dark-2: #1f2937;
+  --el-fill-color-blank: var(--admin-bg);
+  --el-bg-color-page: var(--admin-bg-page);
+  --el-border-color: var(--admin-border);
+  --el-border-color-light: #f3f4f6;
+  --el-text-color-primary: var(--admin-text);
+  --el-text-color-regular: #4b5563;
+  --el-text-color-secondary: var(--admin-text-secondary);
+  --el-text-color-placeholder: var(--admin-text-muted);
+}
+
+/* 按钮、标签等统一偏中性 */
+.el-button--primary {
+  --el-button-bg-color: #374151;
+  --el-button-border-color: #374151;
+  --el-button-hover-bg-color: #4b5563;
+  --el-button-hover-border-color: #4b5563;
+}
+
+.el-tag--primary { background-color: #f3f4f6; color: #374151; border-color: #e5e7eb; }
+.el-tag--success { background-color: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+.el-tag--warning { background-color: #fffbeb; color: #b45309; border-color: #fde68a; }
+.el-tag--danger { background-color: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.el-tag--info { background-color: #f8fafc; color: #475569; border-color: #e2e8f0; }
+
+/* 输入框、选择框边框更淡 */
+.el-input__wrapper,
+.el-select .el-input__wrapper {
+  box-shadow: 0 0 0 1px var(--admin-border);
+}
+.el-input__wrapper:hover { box-shadow: 0 0 0 1px #9ca3af; }
+.el-input__wrapper.is-focus { box-shadow: 0 0 0 2px rgba(55, 65, 81, 0.2); }
+
+/* 卡片：白底、细边框、轻阴影，略增层次 */
+.el-card {
+  --el-card-border-color: var(--admin-border-light);
+  --el-card-bg-color: var(--admin-bg);
+  border: var(--admin-card-border);
+  border-radius: 8px;
+  box-shadow: var(--admin-card-shadow);
+}
+
+/* 表格 */
+.el-table {
+  --el-table-border-color: var(--admin-border);
+  --el-table-header-bg-color: #fafafa;
+}
+.el-table th.el-table__cell { font-weight: 600; color: var(--admin-text); }
+
+/* 菜单项 hover/active 用灰不用蓝 */
+.el-menu--horizontal,
+.el-menu--vertical {
+  --el-menu-hover-bg-color: var(--admin-hover);
+  --el-menu-active-color: var(--admin-text);
+}
+
+/* 列表页工具栏：筛选一行、操作（新增/导出）一行 */
+.admin-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.admin-toolbar-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.admin-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 1px solid var(--admin-border-light);
+}
+.admin-toolbar-actions-only .admin-toolbar-actions {
+  border-top: none;
+  padding-top: 0;
+}
