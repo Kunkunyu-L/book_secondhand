@@ -22,6 +22,18 @@
         <input class="form-input" v-model="form.phone" placeholder="请输入手机号" type="number" maxlength="11" />
       </view>
 
+      <!-- 学校 -->
+      <view class="form-item">
+        <text class="form-label">学校</text>
+        <input class="form-input" v-model="form.school" placeholder="请输入所在学校" />
+      </view>
+
+      <!-- 专业 -->
+      <view class="form-item">
+        <text class="form-label">专业</text>
+        <input class="form-input" v-model="form.major" placeholder="请输入所学专业" />
+      </view>
+
       <!-- 用户名（不可修改） -->
       <view class="form-item">
         <text class="form-label">用户名</text>
@@ -53,7 +65,7 @@ import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import request from '@/untils/request.js'
 
-const form = ref({ nickname: '', phone: '', avatar: '', username: '' })
+const form = ref({ nickname: '', phone: '', avatar: '', username: '', school: '', major: '' })
 const pwd = ref({ oldPassword: '', newPassword: '' })
 
 onShow(() => { loadProfile() })
@@ -62,7 +74,14 @@ const loadProfile = async () => {
   try {
     const res = await request({ url: '/my/getUserInfo', method: 'GET' })
     const u = res.data || {}
-    form.value = { nickname: u.nickname || '', phone: u.phone || '', avatar: u.avatar || '', username: u.username || '' }
+    form.value = {
+      nickname: u.nickname || '',
+      phone: u.phone || '',
+      avatar: u.avatar || '',
+      username: u.username || '',
+      school: u.school || '',
+      major: u.major || '',
+    }
   } catch (e) {}
 }
 
@@ -70,7 +89,6 @@ const chooseAvatar = () => {
   uni.chooseImage({
     count: 1,
     success: (res) => {
-      // 实际项目需上传到服务器，这里暂用本地路径
       form.value.avatar = res.tempFilePaths[0]
     }
   })
@@ -85,7 +103,13 @@ const saveProfile = async () => {
     await request({
       url: '/my/updateProfile',
       method: 'PUT',
-      data: { nickname: form.value.nickname, phone: form.value.phone, avatar: form.value.avatar }
+      data: {
+        nickname: form.value.nickname,
+        phone: form.value.phone,
+        avatar: form.value.avatar,
+        school: form.value.school,
+        major: form.value.major,
+      }
     })
     uni.showToast({ title: '保存成功', icon: 'success' })
     setTimeout(() => uni.navigateBack(), 1000)
@@ -121,6 +145,6 @@ const changePassword = async () => {
 .avatar-item { justify-content: space-between; }
 .avatar-wrap { display: flex; align-items: center; gap: 10rpx; }
 .avatar-img { width: 80rpx; height: 80rpx; border-radius: 50%; }
-.save-btn { background: #007AFF; color: #fff; border-radius: 40rpx; margin-top: 40rpx; font-size: 32rpx; }
-.pwd-btn { background: #fff; color: #007AFF; border: 1rpx solid #007AFF; border-radius: 40rpx; margin: 20rpx 0; font-size: 28rpx; }
+.save-btn { background: #1f2937; color: #fff; border-radius: 40rpx; margin-top: 40rpx; font-size: 32rpx; }
+.pwd-btn { background: #fff; color: #374151; border: 1rpx solid #e5e7eb; border-radius: 40rpx; margin: 20rpx 0; font-size: 28rpx; }
 </style>

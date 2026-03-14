@@ -13,16 +13,22 @@
       }
     },
 	{
-	  "path": "pages/market/market",
+	  "path": "pages/discover/discover",
 	  "style": {
-	    "navigationBarTitleText": "书市"
+	    "navigationBarTitleText": "发现"
 	  }
 	},
 	{
-	  "path": "pages/cart/cart",
+	  "path": "pages/publish-entry/publish-entry",
 	  "style": {
-	    "navigationBarTitleText": "购物车"
+	    "navigationBarTitleText": "我要发布"
 	  }
+	},
+	{
+	    "path": "pages/search/search",
+	    "style": {
+	      "navigationBarTitleText": "搜索"
+	    }
 	},
     {
         "path": "pages/mine/home",
@@ -101,7 +107,25 @@
 	{
 	    "path": "pages/publish/mybooks",
 	    "style": { 
-		 "navigationBarTitleText": "我发布的图书"
+		 "navigationBarTitleText": "我发布的闲置"
+		}
+	},
+	{
+	    "path": "pages/discover/my-posts",
+	    "style": { 
+		 "navigationBarTitleText": "我发布的帖子"
+		}
+	},
+	{
+	    "path": "pages/discover/post-publish",
+	    "style": {
+		 "navigationBarTitleText": "发布帖子"
+		}
+	},
+	{
+	    "path": "pages/discover/post-detail",
+	    "style": {
+		 "navigationBarTitleText": "帖子详情"
 		}
 	},
 	{
@@ -114,18 +138,6 @@
 	    "path": "pages/chat/chat",
 	    "style": { 
 		 "navigationBarTitleText": "聊天"
-		}
-	},
-	{
-	    "path": "pages/help/list",
-	    "style": { 
-		 "navigationBarTitleText": "帮助中心"
-		}
-	},
-	{
-	    "path": "pages/help/detail",
-	    "style": { 
-		 "navigationBarTitleText": "文章详情"
 		}
 	},
 	{
@@ -160,16 +172,16 @@
         "text": "首页"
       },
 	  {
-	    "pagePath": "pages/market/market",
+	    "pagePath": "pages/discover/discover",
 	  		"iconPath": "/static/img/market.png",
 	  		"selectedIconPath": "/static/img/market1.png",
-	    "text": "书市"
+	    "text": "发现"
 	  },
 	  {
-	    "pagePath": "pages/cart/cart",
+	    "pagePath": "pages/publish-entry/publish-entry",
 	  		"iconPath": "/static/img/cart.png",
 	  		"selectedIconPath": "/static/img/cart1.png",
-	    "text": "购物车"
+	    "text": "我要发布"
 	  },
 	  {
 	    "pagePath": "pages/chat/sessions",

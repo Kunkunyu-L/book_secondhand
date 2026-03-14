@@ -81,22 +81,26 @@ onMounted(loadData)
 
 <template>
   <el-card shadow="never">
-    <div class="toolbar">
-      <el-select v-model="statusFilter" style="width:120px" @change="handleSearch">
-        <el-option label="全部状态" value="all" />
-        <el-option label="待付款" value="pending" />
-        <el-option label="已付款" value="paid" />
-        <el-option label="已发货" value="shipped" />
-        <el-option label="已完成" value="completed" />
-        <el-option label="已取消" value="cancelled" />
-      </el-select>
-      <el-date-picker v-model="dateRange" type="daterange" range-separator="至"
-        start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
-        style="width:300px" @change="handleSearch" />
-      <el-input v-model="keyword" placeholder="搜索订单号/用户名" clearable style="width:220px"
-        @keyup.enter="handleSearch" @clear="handleSearch" />
-      <el-button type="primary" @click="handleSearch">搜索</el-button>
-      <el-button @click="handleExport">导出</el-button>
+    <div class="admin-toolbar">
+      <div class="admin-toolbar-filters">
+        <el-select v-model="statusFilter" style="width:120px" @change="handleSearch">
+          <el-option label="全部状态" value="all" />
+          <el-option label="待付款" value="pending" />
+          <el-option label="已付款" value="paid" />
+          <el-option label="已发货" value="shipped" />
+          <el-option label="已完成" value="completed" />
+          <el-option label="已取消" value="cancelled" />
+        </el-select>
+        <el-date-picker v-model="dateRange" type="daterange" range-separator="至"
+          start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
+          style="width:300px" @change="handleSearch" />
+        <el-input v-model="keyword" placeholder="搜索订单号/用户名" clearable style="width:220px"
+          @keyup.enter="handleSearch" @clear="handleSearch" />
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
+      </div>
+      <div class="admin-toolbar-actions">
+        <el-button @click="handleExport">导出</el-button>
+      </div>
     </div>
 
     <el-table :data="tableData" v-loading="loading" border stripe>
@@ -179,6 +183,5 @@ onMounted(loadData)
 </template>
 
 <style scoped>
-.toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
 .pagination { display: flex; justify-content: flex-end; margin-top: 16px; }
 </style>

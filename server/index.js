@@ -71,6 +71,9 @@ app.use("/chat", chatRouter);
 //用户端功能路由（需认证：退款、投诉、工单、优惠券、通知）
 const clientRouter = require("./router/client");
 app.use("/client", clientRouter);
+//发现（帖子：列表/评论公开，发帖/点赞/评论需认证）
+const discoverRouter = require("./router/discover");
+app.use("/discover", discoverRouter);
 //管理后台路由（需认证+管理员权限）
 const adminRouter = require("./router/admin");
 app.use("/admin", adminRouter);

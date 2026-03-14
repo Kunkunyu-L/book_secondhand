@@ -15,12 +15,12 @@ function randomInt(min, max) {
 }
 
 /**
- * 生成数学算式验证码
+ * 生成数学算式验证码（10以内的数，便于计算）
  * @returns { token, question } 例如 { token: 'xxx', question: '7 + 5 = ?' }
  */
 function generate() {
-  const a = randomInt(1, 20)
-  const b = randomInt(1, 20)
+  const a = randomInt(0, 10)
+  const b = randomInt(0, 10)
   const answer = String(a + b)
   const token = randomToken()
   store.set(token, { answer, expires: Date.now() + TTL })

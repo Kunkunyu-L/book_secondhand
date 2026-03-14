@@ -59,14 +59,14 @@
 		  <view class="menu-icon">
 		    <uni-icons type="list" size="22" color="#007AFF"></uni-icons>
 		  </view>
-		  <view class="menu-text">我发布的图书</view>
+		  <view class="menu-text">我发布的闲置</view>
 		  <uni-icons type="right" size="16" color="#ccc"></uni-icons>
 		</view>
-		<view class="menu-item" @click="goToPublish">
+		<view class="menu-item" @click="goToMyPosts">
 		  <view class="menu-icon">
-		    <uni-icons type="plusempty" size="22" color="#FF9500"></uni-icons>
+		    <uni-icons type="compose" size="22" color="#FF9500"></uni-icons>
 		  </view>
-		  <view class="menu-text">发布图书</view>
+		  <view class="menu-text">我发布的帖子</view>
 		  <uni-icons type="right" size="16" color="#ccc"></uni-icons>
 		</view>
       </view>
@@ -82,31 +82,13 @@
         </view>
       </view>
 
-      <!-- 聊天/客服菜单 -->
+      <!-- 客服 -->
       <view class="menu-group">
-        <view class="menu-item" @click="goToMessages">
-          <view class="menu-icon">
-            <uni-icons type="chatbubble" size="22" color="#409EFF"></uni-icons>
-          </view>
-          <view class="menu-text">我的消息</view>
-          <uni-icons type="right" size="16" color="#ccc"></uni-icons>
-        </view>
         <view class="menu-item" @click="goToService">
           <view class="menu-icon">
             <uni-icons type="headphones" size="22" color="#E6A23C"></uni-icons>
           </view>
           <view class="menu-text">联系客服</view>
-          <uni-icons type="right" size="16" color="#ccc"></uni-icons>
-        </view>
-      </view>
-
-      <!-- 服务与帮助 -->
-      <view class="menu-group">
-        <view class="menu-item" @click="goTo('/pages/help/list')">
-          <view class="menu-icon">
-            <uni-icons type="help" size="22" color="#67C23A"></uni-icons>
-          </view>
-          <view class="menu-text">帮助中心</view>
           <uni-icons type="right" size="16" color="#ccc"></uni-icons>
         </view>
         <view class="menu-item" @click="goTo('/pages/ticket/submit')">
@@ -206,9 +188,9 @@ const goToMyBooks = () => {
   uni.navigateTo({ url: '/pages/publish/mybooks' })
 }
 
-const goToPublish = () => {
+const goToMyPosts = () => {
   if (!checkLogin()) return
-  uni.navigateTo({ url: '/pages/publish/publish' })
+  uni.navigateTo({ url: '/pages/discover/my-posts' })
 }
 
 const goToMessages = () => {

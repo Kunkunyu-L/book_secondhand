@@ -1,12 +1,11 @@
 // middleware/auth.js（权限校验中间件）
-// 验证是否为管理员角色
+// 验证是否为可登录后台的角色：超级管理员、运营管理员、客服（或 is_service=1）
+const ADMIN_ROLES = ["superAdmin", "operationAdmin", "customerService"];
+
 const isAdmin = (req, res, next) => {
-  // req.auth 是 express-jwt v8+ 解析后的数据（包含 token 中的 payload）
-  if (req.auth && req.auth.role === "admin") {
-    // 是管理员，放行
+  if (req.auth && (ADMIN_ROLES.includes(req.auth.role) || req.auth.is_service === 1)) {
     next();
   } else {
-    // 非管理员，返回无权限
     res.cc("无管理员权限", 403);
   }
 };

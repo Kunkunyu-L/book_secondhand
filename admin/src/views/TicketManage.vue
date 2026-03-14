@@ -51,13 +51,15 @@ onMounted(loadData)
 
 <template>
   <el-card shadow="never">
-    <div class="toolbar">
-      <el-select v-model="statusFilter" style="width:120px" @change="handleSearch">
-        <el-option label="全部" value="all" /><el-option label="待处理" value="pending" />
-        <el-option label="处理中" value="processing" /><el-option label="已解决" value="resolved" /><el-option label="已关闭" value="closed" />
-      </el-select>
-      <el-input v-model="keyword" placeholder="搜索工单号/标题/用户" clearable style="width:250px" @keyup.enter="handleSearch" @clear="handleSearch" />
-      <el-button type="primary" @click="handleSearch">搜索</el-button>
+    <div class="admin-toolbar">
+      <div class="admin-toolbar-filters">
+        <el-select v-model="statusFilter" style="width:120px" @change="handleSearch">
+          <el-option label="全部" value="all" /><el-option label="待处理" value="pending" />
+          <el-option label="处理中" value="processing" /><el-option label="已解决" value="resolved" /><el-option label="已关闭" value="closed" />
+        </el-select>
+        <el-input v-model="keyword" placeholder="搜索工单号/标题/用户" clearable style="width:250px" @keyup.enter="handleSearch" @clear="handleSearch" />
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
+      </div>
     </div>
 
     <el-table :data="tableData" v-loading="loading" border stripe>
@@ -115,6 +117,5 @@ onMounted(loadData)
 </template>
 
 <style scoped>
-.toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
 .pagination { display: flex; justify-content: flex-end; margin-top: 16px; }
 </style>

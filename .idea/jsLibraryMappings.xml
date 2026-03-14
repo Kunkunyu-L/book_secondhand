@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JavaScriptLibraryMappings">
+    <excludedPredefinedLibrary name="book_secondhand/server/node_modules" />
+    <excludedPredefinedLibrary name="book_secondhand/uniapp/book_home/node_modules" />
+  </component>
+</project>

@@ -15,6 +15,8 @@ router.get("/dashboard", adminHandler.getDashboard);
 // ==================== 用户管理 ====================
 router.get("/users", adminHandler.getUsers);
 router.put("/users/status", adminHandler.updateUserStatus);
+router.put("/users/role", adminHandler.updateUserRole);
+router.post("/users", adminHandler.addUser);
 
 // ==================== 用户违规处理 ====================
 router.get("/violations", adminHandler.getViolationList);
@@ -65,6 +67,12 @@ router.post("/coupons", adminHandler.addCoupon);
 router.put("/coupons", adminHandler.updateCoupon);
 router.delete("/coupons", adminHandler.deleteCoupon);
 
+// ==================== 帖子管理 ====================
+router.get("/discover/posts", adminHandler.getDiscoverPosts);
+router.delete("/discover/posts", adminHandler.deleteDiscoverPost);
+router.get("/discover/comments", adminHandler.getDiscoverComments);
+router.delete("/discover/comments", adminHandler.deleteDiscoverComment);
+
 // ==================== 内容管理 - 公告 ====================
 router.get("/announcements", contentHandler.getAnnouncements);
 router.post("/announcements", contentHandler.addAnnouncement);
@@ -83,6 +91,10 @@ router.post("/banners", contentHandler.addBanner);
 router.put("/banners", contentHandler.updateBanner);
 router.delete("/banners", contentHandler.deleteBanner);
 
+// ==================== 客服 - 人员管理 ====================
+router.get("/service-staff", serviceHandler.getServiceStaff);
+router.put("/service-staff", serviceHandler.updateServiceStaff);
+
 // ==================== 客服 - 会话管理 ====================
 router.get("/chat/sessions", serviceHandler.getChatSessions);
 router.put("/chat/sessions/assign", serviceHandler.assignSession);
@@ -100,9 +112,6 @@ router.get("/faq", serviceHandler.getFaqs);
 router.post("/faq", serviceHandler.saveFaq);
 router.delete("/faq", serviceHandler.deleteFaq);
 
-// ==================== 客服 - 人员管理 ====================
-router.get("/service-staff", serviceHandler.getServiceStaff);
-router.put("/service-staff", serviceHandler.updateServiceStaff);
 
 // ==================== 客服 - 话术库 ====================
 router.get("/quick-reply/categories", serviceHandler.getQuickReplyCategories);
@@ -112,14 +121,13 @@ router.get("/quick-reply", serviceHandler.getQuickReplies);
 router.post("/quick-reply", serviceHandler.saveQuickReply);
 router.delete("/quick-reply", serviceHandler.deleteQuickReply);
 
-// ==================== 系统 - 角色管理 ====================
-router.get("/roles", systemHandler.getRoles);
-router.post("/roles", systemHandler.saveRole);
-router.delete("/roles", systemHandler.deleteRole);
-
 // ==================== 系统 - 基础配置 ====================
 router.get("/configs", systemHandler.getConfigs);
 router.put("/configs", systemHandler.saveConfigs);
+
+// ==================== 系统 - 角色页面权限 ====================
+router.get("/role-page-permission", systemHandler.getRolePagePermission);
+router.put("/role-page-permission", systemHandler.saveRolePagePermission);
 
 // ==================== 系统 - 通知模板 ====================
 router.get("/notification-templates", systemHandler.getNotificationTemplates);

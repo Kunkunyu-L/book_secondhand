@@ -57,18 +57,20 @@ onMounted(loadData)
 
 <template>
   <el-card shadow="never">
-    <div class="toolbar">
-      <el-select v-model="statusFilter" style="width:130px" @change="handleSearch">
-        <el-option label="全部状态" value="all" />
-        <el-option label="待审核" value="pending" />
-        <el-option label="已通过" value="approved" />
-        <el-option label="已驳回" value="rejected" />
-      </el-select>
-      <el-button type="primary" @click="handleSearch">筛选</el-button>
+    <div class="admin-toolbar">
+      <div class="admin-toolbar-filters">
+        <el-select v-model="statusFilter" style="width:130px" @change="handleSearch">
+          <el-option label="全部状态" value="all" />
+          <el-option label="待审核" value="pending" />
+          <el-option label="已通过" value="approved" />
+          <el-option label="已驳回" value="rejected" />
+        </el-select>
+        <el-button type="primary" @click="handleSearch">筛选</el-button>
+      </div>
     </div>
 
     <el-table :data="tableData" v-loading="loading" border stripe>
-      <el-table-column prop="id" label="ID" width="60" align="center" />
+      <el-table-column type="index" label="序号" width="60" align="center" />
       <el-table-column label="用户" width="130">
         <template #default="{ row }">
           <div>{{ row.nickname || row.username }}</div>
@@ -127,6 +129,5 @@ onMounted(loadData)
 </template>
 
 <style scoped>
-.toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
 .pagination { display: flex; justify-content: flex-end; margin-top: 16px; }
 </style>

@@ -42,11 +42,12 @@ function initSocket(io) {
     onlineUsers.get(userId).add(socket.id);
 
     // 如果是客服/管理员, 加入客服房间（新消息推送）
-    if (userRole === "admin" || socket.user.is_service) {
+    const isBackendRole = ["superAdmin", "operationAdmin", "customerService"].includes(userRole);
+    if (isBackendRole || socket.user.is_service) {
       socket.join("service_room");
     }
-    // 仅管理员加入管理员房间（新订单、售后等系统通知）
-    if (userRole === "admin") {
+    // 超级管理员、运营管理员加入管理员房间（新订单、售后等系统通知）
+    if (["superAdmin", "operationAdmin"].includes(userRole)) {
       socket.join("admin_room");
     }
 
@@ -63,7 +64,7 @@ function initSocket(io) {
 
         // 确定发送者角色
         let senderRole = "user";
-        if (userRole === "admin") senderRole = "admin";
+        if (["superAdmin", "operationAdmin", "customerService"].includes(userRole)) senderRole = "admin";
         else if (socket.user.is_service) senderRole = "service";
         else if (userId === session.target_id && session.target_type === "seller") senderRole = "seller";
 

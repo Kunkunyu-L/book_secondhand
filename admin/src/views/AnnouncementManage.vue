@@ -40,11 +40,13 @@ onMounted(loadData)
 
 <template>
   <el-card shadow="never">
-    <div style="margin-bottom:16px">
-      <el-button type="primary" @click="openAdd"><el-icon style="margin-right:4px"><Plus /></el-icon>发布公告</el-button>
+    <div class="admin-toolbar admin-toolbar-actions-only">
+      <div class="admin-toolbar-actions">
+        <el-button type="primary" @click="openAdd"><el-icon style="margin-right:4px"><Plus /></el-icon>发布公告</el-button>
+      </div>
     </div>
     <el-table :data="tableData" v-loading="loading" border stripe>
-      <el-table-column prop="id" label="ID" width="60" align="center" />
+      <el-table-column type="index" label="序号" width="60" align="center" />
       <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
       <el-table-column label="类型" width="100" align="center">
         <template #default="{ row }"><el-tag size="small">{{ typeMap[row.type] || row.type }}</el-tag></template>

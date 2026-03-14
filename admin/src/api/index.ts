@@ -32,6 +32,8 @@ export const getDashboardApi = () => http.get('/admin/dashboard')
 // ==================== 用户管理 ====================
 export const getUsersApi = (params: any) => http.get('/admin/users', { params })
 export const updateUserStatusApi = (data: any) => http.put('/admin/users/status', data)
+export const updateUserRoleApi = (data: any) => http.put('/admin/users/role', data)
+export const addUserApi = (data: any) => http.post('/admin/users', data)
 
 // ==================== 用户违规 ====================
 export const getViolationListApi = (params: any) => http.get('/admin/violations', { params })
@@ -82,17 +84,17 @@ export const addCouponApi = (data: any) => http.post('/admin/coupons', data)
 export const updateCouponApi = (data: any) => http.put('/admin/coupons', data)
 export const deleteCouponApi = (data: any) => http.delete('/admin/coupons', { data })
 
+// ==================== 帖子管理 ====================
+export const getDiscoverPostsApi = (params: any) => http.get('/admin/discover/posts', { params })
+export const deleteDiscoverPostApi = (data: any) => http.delete('/admin/discover/posts', { data })
+export const getDiscoverCommentsApi = (params: any) => http.get('/admin/discover/comments', { params })
+export const deleteDiscoverCommentApi = (data: any) => http.delete('/admin/discover/comments', { data })
+
 // ==================== 公告管理 ====================
 export const getAnnouncementsApi = () => http.get('/admin/announcements')
 export const addAnnouncementApi = (data: any) => http.post('/admin/announcements', data)
 export const updateAnnouncementApi = (data: any) => http.put('/admin/announcements', data)
 export const deleteAnnouncementApi = (data: any) => http.delete('/admin/announcements', { data })
-
-// ==================== 帮助文档 ====================
-export const getHelpArticlesApi = (params?: any) => http.get('/admin/help-articles', { params })
-export const addHelpArticleApi = (data: any) => http.post('/admin/help-articles', data)
-export const updateHelpArticleApi = (data: any) => http.put('/admin/help-articles', data)
-export const deleteHelpArticleApi = (data: any) => http.delete('/admin/help-articles', { data })
 
 // ==================== 轮播图 ====================
 export const getBannersApi = () => http.get('/admin/banners')
@@ -111,33 +113,18 @@ export const getTicketsApi = (params: any) => http.get('/admin/tickets', { param
 export const updateTicketApi = (data: any) => http.put('/admin/tickets', data)
 
 // ==================== FAQ ====================
-export const getFaqCategoriesApi = () => http.get('/admin/faq/categories')
-export const saveFaqCategoryApi = (data: any) => http.post('/admin/faq/categories', data)
-export const deleteFaqCategoryApi = (data: any) => http.delete('/admin/faq/categories', { data })
 export const getFaqsApi = (params?: any) => http.get('/admin/faq', { params })
 export const saveFaqApi = (data: any) => http.post('/admin/faq', data)
 export const deleteFaqApi = (data: any) => http.delete('/admin/faq', { data })
 
-// ==================== 客服人员 ====================
-export const getServiceStaffApi = () => http.get('/admin/service-staff')
-export const updateServiceStaffApi = (data: any) => http.put('/admin/service-staff', data)
-
-// ==================== 话术库 ====================
-export const getQuickReplyCategoriesApi = () => http.get('/admin/quick-reply/categories')
-export const saveQuickReplyCategoryApi = (data: any) => http.post('/admin/quick-reply/categories', data)
-export const deleteQuickReplyCategoryApi = (data: any) => http.delete('/admin/quick-reply/categories', { data })
-export const getQuickRepliesApi = (params?: any) => http.get('/admin/quick-reply', { params })
-export const saveQuickReplyApi = (data: any) => http.post('/admin/quick-reply', data)
-export const deleteQuickReplyApi = (data: any) => http.delete('/admin/quick-reply', { data })
-
-// ==================== 角色权限 ====================
-export const getRolesApi = () => http.get('/admin/roles')
-export const saveRoleApi = (data: any) => http.post('/admin/roles', data)
-export const deleteRoleApi = (data: any) => http.delete('/admin/roles', { data })
 
 // ==================== 系统配置 ====================
 export const getConfigsApi = () => http.get('/admin/configs')
 export const saveConfigsApi = (data: any) => http.put('/admin/configs', data)
+
+// ==================== 角色页面权限 ====================
+export const getRolePagePermissionApi = () => http.get('/admin/role-page-permission')
+export const saveRolePagePermissionApi = (data: any) => http.put('/admin/role-page-permission', data)
 
 // ==================== 通知模板 ====================
 export const getNotificationTemplatesApi = () => http.get('/admin/notification-templates')

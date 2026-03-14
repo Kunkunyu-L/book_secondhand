@@ -35,8 +35,6 @@ router.get("/announcements/detail", homeHandler.getAnnouncementDetail);
 router.get("/help-articles", homeHandler.getHelpArticles);
 //帮助文章详情
 router.get("/help-articles/detail", homeHandler.getHelpArticleDetail);
-//FAQ分类
-router.get("/faq/categories", homeHandler.getFaqCategories);
 //FAQ列表
 router.get("/faq", homeHandler.getFaqs);
 //可领取优惠券

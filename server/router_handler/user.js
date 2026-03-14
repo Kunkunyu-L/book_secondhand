@@ -61,10 +61,11 @@ exports.login = (req, res) => {
 
     const row = results[0];
     const identity = userinfo.identity; // 'admin' | 'service'
+    const adminRoles = ["superAdmin", "operationAdmin", "customerService"];
     if (identity === "admin") {
-      if (row.role !== "admin") return res.cc("该账号不是管理员，请选择正确身份", 403);
+      if (!adminRoles.includes(row.role)) return res.cc("该账号不是管理员，请选择正确身份", 403);
     } else if (identity === "service") {
-      const isService = row.is_service === 1 || row.role === "admin";
+      const isService = row.is_service === 1 || adminRoles.includes(row.role);
       if (!isService) return res.cc("该账号不是客服人员", 403);
     }
 

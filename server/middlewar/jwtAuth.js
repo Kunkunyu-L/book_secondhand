@@ -6,11 +6,13 @@ const config = require("../config");
 const jwtAuth = expressJWT({
   secret: config.jwtSecreKey, // 密钥（与生成 token 时一致）
   algorithms: ["HS256"], // 加密算法（必须指定，否则可能报错）
-}).unless({
-  path: [
-    /^\/api\/.*$/, // 匹配所有以 /api 开头的路径
-    /^\/home\/.*$/, // 匹配所有以 /home 开头的路径
-  ],
+}).unless((req) => {
+  if (/^\/api\/.*/.test(req.path)) return true;
+  if (/^\/home\/.*/.test(req.path)) return true;
+  // 发现：帖子列表、某帖评论列表 公开；/discover/my-posts 需认证
+  if (req.method === "GET" && req.path === "/discover/posts") return true;
+  if (req.method === "GET" && /^\/discover\/posts\/\d+\/comments$/.test(req.path)) return true;
+  return false;
 });
 
 // 2. 生成 JWT 错误处理中间件

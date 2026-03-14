@@ -74,6 +74,72 @@ exports.getMessages = async (req, res) => {
   }
 };
 
+// 通过 REST 接口发送消息（Socket 失败时的兜底）
+exports.postMessage = async (req, res) => {
+  try {
+    const userId = req.auth.id;
+    const userRole = req.auth.role || "user";
+    const { session_id, content, msg_type = "text" } = req.body || {};
+    if (!session_id || !content) return res.cc("缺少参数", 400);
+
+    const sessions = await query("SELECT * FROM chat_session WHERE id=?", [session_id]);
+    if (sessions.length === 0) return res.cc("会话不存在", 404);
+    const session = sessions[0];
+
+    let senderRole = "user";
+    if (["superAdmin", "operationAdmin", "customerService"].includes(userRole)) senderRole = "admin";
+    else if (req.auth.is_service) senderRole = "service";
+    else if (userId === session.target_id && session.target_type === "seller") senderRole = "seller";
+
+    const result = await query("INSERT INTO chat_message SET ?", {
+      session_id,
+      sender_id: userId,
+      sender_role: senderRole,
+      content,
+      msg_type,
+      is_read: 0,
+    });
+
+    const isUserSide = userId === session.user_id;
+    const unreadField = isUserSide ? "unread_target" : "unread_user";
+    await query(
+      `UPDATE chat_session SET last_message=?, last_message_time=NOW(), ${unreadField}=${unreadField}+1 WHERE id=?`,
+      [content.substring(0, 200), session_id]
+    );
+
+    const msg = {
+      id: result.insertId,
+      session_id,
+      sender_id: userId,
+      sender_role: senderRole,
+      content,
+      msg_type,
+      is_read: 0,
+      created_at: new Date().toISOString(),
+    };
+
+    // 尝试通过 Socket 推送给对端（方便后台/客服实时看到）
+    try {
+      const io = req.app.get("io");
+      if (io) {
+        const isUserSide = userId === session.user_id;
+        const targetId = isUserSide ? session.target_id : session.user_id;
+        io.to(`user_${targetId}`).emit("new_message", msg);
+        if (session.target_type === "service") {
+          io.to("service_room").emit("new_message", msg);
+        }
+      }
+    } catch (e) {
+      // 推送异常仅记录日志，不影响接口返回
+      // console.error("postMessage emit error:", e);
+    }
+
+    res.send({ status: 200, message: "发送成功", data: msg });
+  } catch (err) {
+    res.cc(err);
+  }
+};
+
 // 创建会话（REST方式）
 exports.createSession = async (req, res) => {
   try {

@@ -106,48 +106,20 @@ exports.updateTicket = async (req, res) => {
   } catch (err) { res.cc(err); }
 };
 
-// ==================== FAQ管理 ====================
-exports.getFaqCategories = async (req, res) => {
-  try {
-    const list = await query("SELECT * FROM faq_category ORDER BY sort DESC, id ASC");
-    res.send({ status: 200, data: list });
-  } catch (err) { res.cc(err); }
-};
-
-exports.saveFaqCategory = async (req, res) => {
-  try {
-    const { id, name, sort, status } = req.body;
-    if (!name) return res.cc("名称不能为空", 400);
-    if (id) {
-      await query("UPDATE faq_category SET name=?, sort=?, status=? WHERE id=?", [name, sort || 0, status, id]);
-    } else {
-      await query("INSERT INTO faq_category SET ?", { name, sort: sort || 0, status: status !== undefined ? status : 1 });
-    }
-    res.send({ status: 200, message: "保存成功" });
-  } catch (err) { res.cc(err); }
-};
-
-exports.deleteFaqCategory = async (req, res) => {
-  try {
-    const { id } = req.body;
-    if (!id) return res.cc("参数不完整", 400);
-    await query("DELETE FROM faq WHERE category_id=?", [id]);
-    await query("DELETE FROM faq_category WHERE id=?", [id]);
-    res.send({ status: 200, message: "删除成功" });
-  } catch (err) { res.cc(err); }
-};
-
+// FAQ 列表（按关键字 / 分类筛选）
 exports.getFaqs = async (req, res) => {
   try {
     const keyword = req.query.keyword || "";
-    const categoryId = req.query.category_id || "";
+    const category = req.query.category || "";
     let where = "WHERE 1=1";
     const params = [];
-    if (categoryId) { where += " AND f.category_id=?"; params.push(categoryId); }
-    if (keyword) { where += " AND (f.question LIKE ? OR f.answer LIKE ?)"; const kw = `%${keyword}%`; params.push(kw, kw); }
+    if (category) { where += " AND f.category=?"; params.push(category); }
+    if (keyword) {
+      where += " AND (f.question LIKE ? OR f.answer LIKE ?)";
+      const kw = `%${keyword}%`; params.push(kw, kw);
+    }
     const list = await query(
-      `SELECT f.*, fc.name as category_name FROM faq f
-      LEFT JOIN faq_category fc ON f.category_id=fc.id
+      `SELECT f.*, f.category AS category_name FROM faq f
       ${where} ORDER BY f.sort DESC, f.created_at DESC`, params
     );
     res.send({ status: 200, data: list });
@@ -156,14 +128,14 @@ exports.getFaqs = async (req, res) => {
 
 exports.saveFaq = async (req, res) => {
   try {
-    const { id, category_id, question, answer, sort, status } = req.body;
+    const { id, category, question, answer, sort, status } = req.body;
     if (!question || !answer) return res.cc("问题和回答不能为空", 400);
     if (id) {
-      await query("UPDATE faq SET category_id=?, question=?, answer=?, sort=?, status=? WHERE id=?",
-        [category_id || null, question, answer, sort || 0, status, id]);
+      await query("UPDATE faq SET category=?, question=?, answer=?, sort=?, status=? WHERE id=?",
+        [category || null, question, answer, sort || 0, status, id]);
     } else {
       await query("INSERT INTO faq SET ?", {
-        category_id: category_id || null, question, answer, sort: sort || 0, status: status !== undefined ? status : 1,
+        category: category || null, question, answer, sort: sort || 0, status: status !== undefined ? status : 1,
       });
     }
     res.send({ status: 200, message: "保存成功" });
@@ -179,6 +151,24 @@ exports.deleteFaq = async (req, res) => {
   } catch (err) { res.cc(err); }
 };
 
+// ==================== FAQ 分类（兼容接口，占位实现） ====================
+// 目前 FAQ 表本身就包含 category 字段，这里简单根据去重分类返回列表，满足管理端接口约定。
+exports.getFaqCategories = async (req, res) => {
+  try {
+    const list = await query("SELECT DISTINCT category AS name FROM faq WHERE category IS NOT NULL AND category<>'' ORDER BY name ASC");
+    res.send({ status: 200, data: list });
+  } catch (err) { res.cc(err); }
+};
+
+// FAQ 分类保存 / 删除：为了兼容路由，这里仅做占位，前端目前并未使用独立分类管理。
+exports.saveFaqCategory = async (req, res) => {
+  res.send({ status: 200, message: "ok" });
+};
+
+exports.deleteFaqCategory = async (req, res) => {
+  res.send({ status: 200, message: "ok" });
+};
+
 // ==================== 客服人员管理 ====================
 exports.getServiceStaff = async (req, res) => {
   try {
@@ -186,7 +176,7 @@ exports.getServiceStaff = async (req, res) => {
       `SELECT u.id, u.username, u.nickname, u.avatar, u.phone, u.is_service,
         u.service_max_sessions, u.status, u.created_at,
         (SELECT COUNT(*) FROM chat_session cs WHERE cs.assigned_service=u.id AND cs.status='active') as active_sessions
-      FROM user u WHERE u.is_service=1 OR u.role='admin'
+      FROM user u WHERE u.is_service=1 OR u.role IN ('superAdmin','operationAdmin','customerService')
       ORDER BY u.created_at DESC`
     );
     res.send({ status: 200, data: list });
@@ -209,62 +199,52 @@ exports.updateServiceStaff = async (req, res) => {
 };
 
 // ==================== 客服话术管理 ====================
-exports.getQuickReplyCategories = async (req, res) => {
-  try {
-    const list = await query("SELECT * FROM quick_reply_category ORDER BY sort DESC, id ASC");
-    res.send({ status: 200, data: list });
-  } catch (err) { res.cc(err); }
-};
-
-exports.saveQuickReplyCategory = async (req, res) => {
-  try {
-    const { id, name, sort } = req.body;
-    if (!name) return res.cc("名称不能为空", 400);
-    if (id) {
-      await query("UPDATE quick_reply_category SET name=?, sort=? WHERE id=?", [name, sort || 0, id]);
-    } else {
-      await query("INSERT INTO quick_reply_category SET ?", { name, sort: sort || 0 });
-    }
-    res.send({ status: 200, message: "保存成功" });
-  } catch (err) { res.cc(err); }
-};
-
-exports.deleteQuickReplyCategory = async (req, res) => {
-  try {
-    const { id } = req.body;
-    if (!id) return res.cc("参数不完整", 400);
-    await query("DELETE FROM quick_reply WHERE category_id=?", [id]);
-    await query("DELETE FROM quick_reply_category WHERE id=?", [id]);
-    res.send({ status: 200, message: "删除成功" });
-  } catch (err) { res.cc(err); }
-};
-
 exports.getQuickReplies = async (req, res) => {
   try {
     const keyword = req.query.keyword || "";
-    const categoryId = req.query.category_id || "";
+    const category = req.query.category || "";
     let where = "WHERE 1=1";
     const params = [];
-    if (categoryId) { where += " AND qr.category_id=?"; params.push(categoryId); }
-    if (keyword) { where += " AND (qr.title LIKE ? OR qr.content LIKE ?)"; const kw = `%${keyword}%`; params.push(kw, kw); }
+    if (category) { where += " AND qr.category=?"; params.push(category); }
+    if (keyword) {
+      where += " AND (qr.title LIKE ? OR qr.content LIKE ?)";
+      const kw = `%${keyword}%`; params.push(kw, kw);
+    }
     const list = await query(
-      `SELECT qr.*, qrc.name as category_name FROM quick_reply qr
-      LEFT JOIN quick_reply_category qrc ON qr.category_id=qrc.id
+      `SELECT qr.*, qr.category AS category_name FROM quick_reply qr
       ${where} ORDER BY qr.sort DESC, qr.created_at DESC`, params
     );
     res.send({ status: 200, data: list });
   } catch (err) { res.cc(err); }
 };
 
+// ==================== 话术分类（兼容接口，占位实现） ====================
+exports.getQuickReplyCategories = async (req, res) => {
+  try {
+    const list = await query(
+      "SELECT DISTINCT category AS name FROM quick_reply WHERE category IS NOT NULL AND category<>'' ORDER BY name ASC"
+    );
+    res.send({ status: 200, data: list });
+  } catch (err) { res.cc(err); }
+};
+
+exports.saveQuickReplyCategory = async (req, res) => {
+  res.send({ status: 200, message: "ok" });
+};
+
+exports.deleteQuickReplyCategory = async (req, res) => {
+  res.send({ status: 200, message: "ok" });
+};
+
 exports.saveQuickReply = async (req, res) => {
   try {
-    const { id, category_id, title, content, sort } = req.body;
+    const { id, category, title, content, sort } = req.body;
     if (!title || !content) return res.cc("标题和内容不能为空", 400);
     if (id) {
-      await query("UPDATE quick_reply SET category_id=?, title=?, content=?, sort=? WHERE id=?",
-        [category_id || null, title, content, sort || 0, id]);
+      await query("UPDATE quick_reply SET category=?, title=?, content=?, sort=? WHERE id=?",
+        [category || null, title, content, sort || 0, id]);
     } else {
-      await query("INSERT INTO quick_reply SET ?", { category_id: category_id || null, title, content, sort: sort || 0 });
+      await query("INSERT INTO quick_reply SET ?", { category: category || null, title, content, sort: sort || 0 });
     }
     res.send({ status: 200, message: "保存成功" });
   } catch (err) { res.cc(err); }

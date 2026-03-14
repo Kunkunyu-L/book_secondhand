@@ -67,21 +67,25 @@ onMounted(loadData)
 
 <template>
   <el-card shadow="never">
-    <div class="toolbar">
-      <el-input v-model="keyword" placeholder="搜索用户名/昵称" clearable style="width:280px"
-        @keyup.enter="handleSearch" @clear="handleSearch" />
-      <el-button type="primary" @click="handleSearch">搜索</el-button>
-      <el-button type="danger" @click="openAddDialog">
-        <el-icon style="margin-right:4px"><Plus /></el-icon>新增违规处理
-      </el-button>
+    <div class="admin-toolbar">
+      <div class="admin-toolbar-filters">
+        <el-input v-model="keyword" placeholder="搜索用户名/昵称" clearable style="width:280px"
+          @keyup.enter="handleSearch" @clear="handleSearch" />
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
+      </div>
+      <div class="admin-toolbar-actions">
+        <el-button type="primary" @click="openAddDialog">
+          <el-icon style="margin-right:4px"><Plus /></el-icon>新增违规处理
+        </el-button>
+      </div>
     </div>
 
     <el-table :data="tableData" v-loading="loading" border stripe>
-      <el-table-column prop="id" label="ID" width="60" align="center" />
+      <el-table-column type="index" label="序号" width="60" align="center" />
       <el-table-column label="用户" width="130">
         <template #default="{ row }">
           <div>{{ row.nickname || row.username }}</div>
-          <div style="font-size:11px;color:#909399">ID: {{ row.user_id }}</div>
+          <div style="font-size:11px;color:#909399">{{ row.username || '-' }}</div>
         </template>
       </el-table-column>
       <el-table-column label="处理类型" width="110" align="center">
@@ -134,6 +138,5 @@ onMounted(loadData)
 </template>
 
 <style scoped>
-.toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
 .pagination { display: flex; justify-content: flex-end; margin-top: 16px; }
 </style>

@@ -20,17 +20,37 @@ exports.getUserInfo = (req, res) => {
 // 更新用户资料
 exports.updateProfile = (req, res) => {
   const userId = req.auth.id;
-  const { nickname, avatar, phone } = req.body;
+  const { nickname, avatar, phone, school, major } = req.body;
   const fields = [];
   const values = [];
-  if (nickname !== undefined) { fields.push("nickname=?"); values.push(nickname); }
-  if (avatar !== undefined) { fields.push("avatar=?"); values.push(avatar); }
-  if (phone !== undefined) { fields.push("phone=?"); values.push(phone); }
+
+  if (nickname !== undefined) {
+    fields.push("nickname=?");
+    values.push(nickname);
+  }
+  if (avatar !== undefined) {
+    fields.push("avatar=?");
+    values.push(avatar);
+  }
+  if (phone !== undefined) {
+    fields.push("phone=?");
+    values.push(phone);
+  }
+  // 新增学校与专业字段
+  if (school !== undefined) {
+    fields.push("school=?");
+    values.push(school);
+  }
+  if (major !== undefined) {
+    fields.push("major=?");
+    values.push(major);
+  }
+
   if (fields.length === 0) return res.cc("没有需要更新的字段", 400);
 
   values.push(userId);
   const sql = `UPDATE user SET ${fields.join(",")} WHERE id=?`;
-  db.query(sql, values, (err, results) => {
+  db.query(sql, values, (err) => {
     if (err) return res.cc(err);
     res.send({ status: 200, message: "更新成功" });
   });

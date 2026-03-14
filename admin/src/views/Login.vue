@@ -67,24 +67,48 @@ onMounted(fetchCaptcha)
 </script>
 
 <template>
-  <div class="login-wrap">
-    <div class="login-bg">
-      <div class="bg-shape shape-1" />
-      <div class="bg-shape shape-2" />
-      <div class="bg-shape shape-3" />
+  <div class="login-page">
+    <!-- 左侧视觉区域 -->
+    <div class="login-left">
+      <div class="left-inner">
+        <div class="brand">
+          <div class="brand-logo">B</div>
+          <div class="brand-text">
+            <div class="brand-title">Book Secondhand</div>
+            <div class="brand-sub">二手书交易管理平台</div>
+          </div>
+        </div>
+        <div class="slogan">
+          <h1>让教材与好书，被更多人看到</h1>
+          <p>统一管理平台图书、用户闲置、订单与售后，让二手书的流转更高效。</p>
+        </div>
+        <div class="highlights">
+          <div class="highlight-item">
+            <span class="dot primary"></span>
+            <span>实时订单与资金看板</span>
+          </div>
+          <div class="highlight-item">
+            <span class="dot secondary"></span>
+            <span>发布审核与违规处理闭环</span>
+          </div>
+          <div class="highlight-item">
+            <span class="dot tertiary"></span>
+            <span>客服会话、工单与 FAQ 统一管理</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="login-card">
-      <div class="card-inner">
-        <div class="logo-area">
-          <div class="logo-icon">
-            <el-icon :size="40"><Reading /></el-icon>
+    <!-- 右侧登录区域 -->
+    <div class="login-right">
+      <div class="login-card">
+        <div class="card-inner">
+          <div class="logo-area">
+            <h1 class="sys-name">登录管理后台</h1>
+            <p class="sys-desc">请选择身份并使用管理员 / 客服账号登录</p>
           </div>
-          <h1 class="sys-name">二手书管理后台</h1>
-          <p class="sys-desc">安全登录，请选择身份并完成验证</p>
-        </div>
 
-        <el-form :model="form" class="login-form" @submit.prevent="handleLogin">
+          <el-form :model="form" class="login-form" @submit.prevent="handleLogin">
           <el-form-item>
             <el-select
               v-model="form.identity"
@@ -165,126 +189,173 @@ onMounted(fetchCaptcha)
               登 录
             </el-button>
           </el-form-item>
-        </el-form>
+          </el-form>
 
-        <p class="login-tip">请使用管理员或客服账号登录</p>
+          <p class="login-tip">登录即代表你同意本系统的管理规范和操作审计。</p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.login-wrap {
+.login-page {
   min-height: 100vh;
+  display: flex;
+  background: radial-gradient(circle at 10% 20%, #e0f2fe 0, #eff6ff 35%, #f9fafb 70%);
+}
+
+.login-left {
+  flex: 1.2;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
-  background: #f5f7fa;
+  padding: 40px 48px;
 }
 
-.login-bg {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+.left-inner {
+  max-width: 520px;
 }
 
-.bg-shape {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.06;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 32px;
 }
 
-.shape-1 {
-  width: 600px;
-  height: 600px;
-  background: #409eff;
-  top: -200px;
-  right: -100px;
+.brand-logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  font-weight: 700;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.shape-2 {
-  width: 400px;
-  height: 400px;
-  background: #67c23a;
-  bottom: -100px;
-  left: -80px;
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.shape-3 {
-  width: 280px;
-  height: 280px;
-  background: #909399;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+.brand-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.brand-sub {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.slogan h1 {
+  font-size: 30px;
+  line-height: 1.3;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 12px;
+}
+
+.slogan p {
+  margin: 0;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.highlights {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.highlight-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+.dot.primary {
+  background: #2563eb;
+}
+.dot.secondary {
+  background: #22c55e;
+}
+.dot.tertiary {
+  background: #f97316;
+}
+
+.login-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
 }
 
 .login-card {
   width: 100%;
   max-width: 420px;
-  position: relative;
-  z-index: 1;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow:
+    0 18px 45px rgba(15, 23, 42, 0.08),
+    0 1px 2px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e5e7eb;
 }
 
 .card-inner {
-  padding: 48px 40px 40px;
+  padding: 32px 34px 28px;
 }
 
 .logo-area {
-  text-align: center;
-  margin-bottom: 36px;
-}
-
-.logo-icon {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 16px;
-  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
+  margin-bottom: 26px;
 }
 
 .sys-name {
   font-size: 22px;
   font-weight: 600;
-  color: #303133;
+  color: #0f172a;
   margin: 0 0 8px;
-  letter-spacing: 0.5px;
 }
 
 .sys-desc {
   font-size: 13px;
-  color: #909399;
+  color: #6b7280;
   margin: 0;
 }
 
 .login-form :deep(.el-form-item) {
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 
 .login-form :deep(.el-input__wrapper),
 .identity-select :deep(.el-input__wrapper) {
-  border-radius: 10px;
-  box-shadow: 0 0 0 1px #dcdfe6;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px #e5e7eb;
 }
 
 .login-form :deep(.el-input__wrapper:hover),
 .identity-select :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px #c0c4cc;
+  box-shadow: 0 0 0 1px #d1d5db;
 }
 
 .login-form :deep(.el-input__wrapper.is-focus),
 .identity-select :deep(.el-select .el-input.is-focus .el-input__wrapper) {
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.3);
+  box-shadow: 0 0 0 2px rgba(55, 65, 81, 0.15);
 }
 
 .identity-select {
@@ -316,11 +387,12 @@ onMounted(fetchCaptcha)
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: #f5f7fa;
-  border-radius: 10px;
-  font-size: 15px;
+  background: #f8f9fa;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: 500;
-  color: #303133;
+  color: #374151;
 }
 
 .captcha-box.loading {
@@ -339,16 +411,31 @@ onMounted(fetchCaptcha)
 
 .login-btn {
   width: 100%;
-  height: 48px;
-  font-size: 16px;
+  height: 44px;
+  font-size: 15px;
   font-weight: 500;
-  border-radius: 10px;
+  border-radius: 6px;
+  background: #374151;
+  border-color: #374151;
 }
 
 .login-tip {
   text-align: center;
   font-size: 12px;
-  color: #c0c4cc;
-  margin: 24px 0 0;
+  color: #9ca3af;
+  margin: 18px 0 0;
+}
+
+@media (max-width: 960px) {
+  .login-page {
+    flex-direction: column;
+  }
+  .login-left {
+    display: none;
+  }
+  .login-right {
+    flex: none;
+    padding: 32px 20px;
+  }
 }
 </style>

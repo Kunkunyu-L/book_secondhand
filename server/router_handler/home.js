@@ -286,21 +286,13 @@ exports.getHelpArticleDetail = (req, res) => {
   });
 };
 
-// 获取FAQ分类
-exports.getFaqCategories = (req, res) => {
-  db.query("SELECT id, name, sort FROM faq_category ORDER BY sort ASC", (err, results) => {
-    if (err) return res.cc(err);
-    res.send({ status: 200, message: "获取FAQ分类成功", data: results });
-  });
-};
-
 // 获取FAQ列表
 exports.getFaqs = (req, res) => {
   const { category_id, keyword } = req.query;
-  let sql = "SELECT f.id, f.question, f.answer, f.category_id, fc.name AS category_name FROM faq f LEFT JOIN faq_category fc ON f.category_id=fc.id WHERE 1=1";
+  let sql = "SELECT f.id, f.question, f.answer, f.category AS category_name FROM faq f WHERE 1=1";
   const params = [];
   if (category_id) {
-    sql += " AND f.category_id=?";
+    sql += " AND f.category=?";
     params.push(category_id);
   }
   if (keyword) {

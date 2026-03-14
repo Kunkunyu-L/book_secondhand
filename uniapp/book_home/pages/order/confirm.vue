@@ -95,11 +95,10 @@ onLoad((options) => {
 
 onShow(() => {
   loadAddress()
-  // 如果不是直接购买，从购物车获取选中项
+  // 仅支持直接购买，不再从购物车拉取
   if (!isDirectBuy.value && orderItems.value.length === 0) {
-    loadCartSelected()
+    orderItems.value = []
   }
-  // 检查是否从地址选择页返回
   const addr = uni.getStorageSync('selectedAddress')
   if (addr) {
     selectedAddress.value = JSON.parse(addr)
@@ -116,22 +115,6 @@ const loadAddress = async () => {
     if (list.length > 0) {
       selectedAddress.value = list.find(a => a.is_default) || list[0]
     }
-  } catch (e) {}
-}
-
-const loadCartSelected = async () => {
-  try {
-    const res = await request({ url: '/cart/list', method: 'GET' })
-    orderItems.value = (res.data || [])
-      .filter(item => item.selected === 1)
-      .map(item => ({
-        book_id: item.book_id,
-        book_type: item.book_type,
-        title: item.title,
-        cover_img: item.cover_img,
-        price: item.price,
-        quantity: item.quantity
-      }))
   } catch (e) {}
 }
 

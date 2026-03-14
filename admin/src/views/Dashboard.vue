@@ -44,9 +44,9 @@ onMounted(loadData)
     <!-- 统计卡片 -->
     <el-row :gutter="20" class="stat-cards">
       <el-col :xs="12" :sm="6">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-icon bg-blue">
-            <el-icon :size="28"><User /></el-icon>
+        <el-card shadow="never" class="stat-card">
+          <div class="stat-icon">
+            <el-icon :size="24"><User /></el-icon>
           </div>
           <div class="stat-info">
             <div class="stat-value">{{ stats.userCount }}</div>
@@ -55,9 +55,9 @@ onMounted(loadData)
         </el-card>
       </el-col>
       <el-col :xs="12" :sm="6">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-icon bg-green">
-            <el-icon :size="28"><Reading /></el-icon>
+        <el-card shadow="never" class="stat-card">
+          <div class="stat-icon">
+            <el-icon :size="24"><Reading /></el-icon>
           </div>
           <div class="stat-info">
             <div class="stat-value">{{ stats.platformBookCount + stats.userBookCount }}</div>
@@ -66,9 +66,9 @@ onMounted(loadData)
         </el-card>
       </el-col>
       <el-col :xs="12" :sm="6">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-icon bg-orange">
-            <el-icon :size="28"><Document /></el-icon>
+        <el-card shadow="never" class="stat-card">
+          <div class="stat-icon">
+            <el-icon :size="24"><Document /></el-icon>
           </div>
           <div class="stat-info">
             <div class="stat-value">{{ stats.orderCount }}</div>
@@ -77,9 +77,9 @@ onMounted(loadData)
         </el-card>
       </el-col>
       <el-col :xs="12" :sm="6">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-icon bg-red">
-            <el-icon :size="28"><Money /></el-icon>
+        <el-card shadow="never" class="stat-card">
+          <div class="stat-icon">
+            <el-icon :size="24"><Money /></el-icon>
           </div>
           <div class="stat-info">
             <div class="stat-value">{{ Number(stats.revenue).toFixed(2) }}</div>
@@ -92,7 +92,7 @@ onMounted(loadData)
     <!-- 概览区域 -->
     <el-row :gutter="20" style="margin-top: 20px">
       <el-col :xs="24" :sm="12">
-        <el-card shadow="hover">
+        <el-card shadow="never">
           <template #header>
             <div class="card-header">
               <span>今日概览</span>
@@ -100,23 +100,23 @@ onMounted(loadData)
           </template>
           <div class="today-stats">
             <div class="today-item">
-              <div class="today-value color-orange">{{ stats.todayOrderCount }}</div>
+              <div class="today-value">{{ stats.todayOrderCount }}</div>
               <div class="today-label">今日订单</div>
             </div>
             <div class="today-item">
-              <div class="today-value color-red">{{ stats.pendingOrderCount }}</div>
+              <div class="today-value">{{ stats.pendingOrderCount }}</div>
               <div class="today-label">待处理订单</div>
             </div>
             <div class="today-item">
-              <div class="today-value color-blue">{{ stats.platformBookCount }}</div>
+              <div class="today-value">{{ stats.platformBookCount }}</div>
               <div class="today-label">平台图书</div>
             </div>
             <div class="today-item">
-              <div class="today-value color-green">{{ stats.userBookCount }}</div>
+              <div class="today-value">{{ stats.userBookCount }}</div>
               <div class="today-label">用户图书</div>
             </div>
             <div class="today-item">
-              <div class="today-value" style="color:#E6A23C">{{ stats.reviewingBookCount }}</div>
+              <div class="today-value">{{ stats.reviewingBookCount }}</div>
               <div class="today-label">待审核图书</div>
             </div>
           </div>
@@ -124,7 +124,7 @@ onMounted(loadData)
       </el-col>
 
       <el-col :xs="24" :sm="12">
-        <el-card shadow="hover">
+        <el-card shadow="never">
           <template #header>
             <div class="card-header">
               <span>最近订单</span>
@@ -156,25 +156,21 @@ onMounted(loadData)
 .stat-card :deep(.el-card__body) {
   display: flex;
   align-items: center;
-  padding: 20px;
+  padding: 18px 20px;
 }
 
 .stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  margin-right: 16px;
+  background: #f3f4f6;
+  color: #374151;
+  margin-right: 14px;
   flex-shrink: 0;
 }
-
-.bg-blue { background: #409EFF; }
-.bg-green { background: #67C23A; }
-.bg-orange { background: #E6A23C; }
-.bg-red { background: #F56C6C; }
 
 .stat-info {
   flex: 1;
@@ -182,21 +178,22 @@ onMounted(loadData)
 }
 
 .stat-value {
-  font-size: 26px;
-  font-weight: 700;
-  color: #303133;
+  font-size: 22px;
+  font-weight: 600;
+  color: #1f2937;
   line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 14px;
-  color: #909399;
+  font-size: 13px;
+  color: #6b7280;
   margin-top: 4px;
 }
 
 .card-header {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
+  color: #1f2937;
 }
 
 .today-stats {
@@ -211,19 +208,14 @@ onMounted(loadData)
 }
 
 .today-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #303133;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
 }
 
 .today-label {
-  font-size: 13px;
-  color: #909399;
+  font-size: 12px;
+  color: #6b7280;
   margin-top: 6px;
 }
-
-.color-blue { color: #409EFF; }
-.color-green { color: #67C23A; }
-.color-orange { color: #E6A23C; }
-.color-red { color: #F56C6C; }
 </style>

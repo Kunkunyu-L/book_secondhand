@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { usePermissionStore } from '../stores/permission'
 import { getNotificationsApi, markNotificationReadApi, deleteNotificationApi, getConfigsApi } from '../api'
 import { connectSocket } from '../utils/socket'
 import { playOrderNotifySound, playChatNotifySound } from '../utils/notificationSound'
@@ -11,7 +12,13 @@ import AdminChat from '../components/AdminChat.vue'
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const permissionStore = usePermissionStore()
 const isCollapse = ref(false)
+
+const canAccess = (path: string) => {
+  const role = authStore.role || localStorage.getItem('admin_role') || ''
+  return permissionStore.canAccess(path, role)
+}
 const unreadCount = ref(0)
 const notifications = ref<any[]>([])
 const notifyVisible = ref(false)
@@ -22,13 +29,13 @@ const activeMenu = computed(() => route.path)
 
 const defaultOpeneds = computed(() => {
   const path = route.path
-  if (['/platform-books', '/user-books', '/book-audit', '/categories'].includes(path)) return ['books']
+  if (['/platform-books', '/user-books', '/categories'].includes(path)) return ['books']
   if (['/orders', '/refunds', '/order-stats'].includes(path)) return ['order-group']
   if (['/users', '/violations'].includes(path)) return ['user-group']
   if (['/payments', '/withdrawals', '/coupons'].includes(path)) return ['transactions']
-  if (['/announcements', '/help-articles', '/banners'].includes(path)) return ['content']
-  if (['/chat-sessions', '/tickets', '/faq-manage', '/service-staff', '/quick-reply'].includes(path)) return ['service']
-  if (['/roles', '/system-config', '/notification-config'].includes(path)) return ['system']
+  if (['/announcements', '/banners', '/discover-posts'].includes(path)) return ['content']
+  if (['/chat-sessions', '/tickets', '/faq-manage'].includes(path)) return ['service']
+  if (path === '/system-config') return []
   return []
 })
 
@@ -125,6 +132,9 @@ const pageTitle = computed(() => {
 onMounted(() => {
   loadSiteConfig()
   loadNotifications()
+  if (!permissionStore.rolePagePermission.superAdmin?.length) {
+    permissionStore.loadRolePagePermission().catch(() => {})
+  }
   notifyTimer = setInterval(loadNotifications, 30000)
   setupRealtimeNotify()
 })
@@ -139,67 +149,66 @@ const handleLogout = () => { authStore.logout(); router.push('/login') }
   <el-container class="layout-container">
     <el-aside :width="isCollapse ? '64px' : '220px'" class="layout-aside">
       <div class="logo">
-        <el-icon :size="24" color="#409EFF"><Reading /></el-icon>
-        <span v-if="!isCollapse" class="logo-text">{{ siteName }}后台管理</span>
+        <el-icon :size="22" class="logo-icon"><Reading /></el-icon>
+        <span v-if="!isCollapse" class="logo-text">{{ siteName }} 后台</span>
       </div>
       <el-scrollbar>
         <el-menu :default-active="activeMenu" :default-openeds="defaultOpeneds" :collapse="isCollapse" router
-          background-color="#304156" text-color="#bfcbd9" active-text-color="#409EFF" :collapse-transition="false" unique-opened>
+          background-color="#fafafa" text-color="#4b5563" active-text-color="#1f2937" :collapse-transition="false" unique-opened
+          class="sidebar-menu">
 
-          <el-menu-item index="/dashboard">
+          <el-menu-item v-if="canAccess('/dashboard')" index="/dashboard">
             <el-icon><DataBoard /></el-icon><template #title>仪表盘</template>
           </el-menu-item>
 
-          <el-sub-menu index="books">
+          <el-sub-menu v-if="canAccess('/categories') || canAccess('/platform-books') || canAccess('/user-books')" index="books">
             <template #title><el-icon><Reading /></el-icon><span>书籍管理</span></template>
-            <el-menu-item index="/categories">分类管理</el-menu-item>
-            <el-menu-item index="/platform-books">平台图书</el-menu-item>
-            <el-menu-item index="/user-books">用户图书</el-menu-item>
-            <el-menu-item index="/book-audit">书籍审核</el-menu-item>
+            <el-menu-item v-if="canAccess('/categories')" index="/categories">分类管理</el-menu-item>
+            <el-menu-item v-if="canAccess('/platform-books')" index="/platform-books">平台图书</el-menu-item>
+            <el-menu-item v-if="canAccess('/user-books')" index="/user-books">用户图书</el-menu-item>
           </el-sub-menu>
 
-          <el-sub-menu index="order-group">
+          <el-sub-menu v-if="canAccess('/orders') || canAccess('/refunds') || canAccess('/order-stats')" index="order-group">
             <template #title><el-icon><Document /></el-icon><span>订单管理</span></template>
-            <el-menu-item index="/orders">订单列表</el-menu-item>
-            <el-menu-item index="/refunds">退款/售后</el-menu-item>
-            <el-menu-item index="/order-stats">订单统计</el-menu-item>
+            <el-menu-item v-if="canAccess('/orders')" index="/orders">订单列表</el-menu-item>
+            <el-menu-item v-if="canAccess('/refunds')" index="/refunds">退款/售后</el-menu-item>
+            <el-menu-item v-if="canAccess('/order-stats')" index="/order-stats">订单统计</el-menu-item>
           </el-sub-menu>
 
-          <el-sub-menu index="user-group">
+          <el-sub-menu v-if="canAccess('/users') || canAccess('/violations')" index="user-group">
             <template #title><el-icon><User /></el-icon><span>用户管理</span></template>
-            <el-menu-item index="/users">用户列表</el-menu-item>
-            <el-menu-item index="/violations">违规处理</el-menu-item>
+            <el-menu-item v-if="canAccess('/users')" index="/users">用户列表</el-menu-item>
+            <el-menu-item v-if="canAccess('/violations')" index="/violations">违规处理</el-menu-item>
           </el-sub-menu>
 
-          <el-sub-menu index="transactions">
+          <el-sub-menu v-if="canAccess('/payments') || canAccess('/withdrawals') || canAccess('/coupons')" index="transactions">
             <template #title><el-icon><Money /></el-icon><span>交易管理</span></template>
-            <el-menu-item index="/payments">支付记录</el-menu-item>
-            <el-menu-item index="/withdrawals">提现管理</el-menu-item>
-            <el-menu-item index="/coupons">优惠券管理</el-menu-item>
+            <el-menu-item v-if="canAccess('/payments')" index="/payments">支付记录</el-menu-item>
+            <el-menu-item v-if="canAccess('/withdrawals')" index="/withdrawals">提现管理</el-menu-item>
+            <el-menu-item v-if="canAccess('/coupons')" index="/coupons">优惠券管理</el-menu-item>
           </el-sub-menu>
 
-          <el-sub-menu index="content">
+          <el-sub-menu v-if="canAccess('/announcements') || canAccess('/banners') || canAccess('/discover-posts')" index="content">
             <template #title><el-icon><Notebook /></el-icon><span>内容管理</span></template>
-            <el-menu-item index="/announcements">公告管理</el-menu-item>
-            <el-menu-item index="/help-articles">帮助中心</el-menu-item>
-            <el-menu-item index="/banners">轮播图管理</el-menu-item>
+            <el-menu-item v-if="canAccess('/announcements')" index="/announcements">公告管理</el-menu-item>
+            <el-menu-item v-if="canAccess('/banners')" index="/banners">轮播图管理</el-menu-item>
+            <el-menu-item v-if="canAccess('/discover-posts')" index="/discover-posts">帖子管理</el-menu-item>
           </el-sub-menu>
 
-          <el-sub-menu index="service">
+          <el-sub-menu v-if="canAccess('/chat-sessions') || canAccess('/tickets') || canAccess('/faq-manage')" index="service">
             <template #title><el-icon><Service /></el-icon><span>客服管理</span></template>
-            <el-menu-item index="/chat-sessions">在线咨询</el-menu-item>
-            <el-menu-item index="/tickets">咨询工单</el-menu-item>
-            <el-menu-item index="/faq-manage">常见问题库</el-menu-item>
-            <el-menu-item index="/service-staff">客服人员</el-menu-item>
-            <el-menu-item index="/quick-reply">话术库</el-menu-item>
+            <el-menu-item v-if="canAccess('/chat-sessions')" index="/chat-sessions">在线咨询</el-menu-item>
+            <el-menu-item v-if="canAccess('/tickets')" index="/tickets">咨询工单</el-menu-item>
+            <el-menu-item v-if="canAccess('/faq-manage')" index="/faq-manage">常见问题库</el-menu-item>
           </el-sub-menu>
 
-          <el-sub-menu index="system">
-            <template #title><el-icon><Setting /></el-icon><span>系统设置</span></template>
-            <el-menu-item index="/roles">角色权限</el-menu-item>
-            <el-menu-item index="/system-config">基础设置</el-menu-item>
-            <el-menu-item index="/notification-config">消息通知</el-menu-item>
-          </el-sub-menu>
+          <el-menu-item v-if="canAccess('/system-config')" index="/system-config">
+            <el-icon><Setting /></el-icon><template #title>全局设置</template>
+          </el-menu-item>
+
+          <el-menu-item v-if="canAccess('/role-pages')" index="/role-pages">
+            <el-icon><Key /></el-icon><template #title>页面权限</template>
+          </el-menu-item>
 
         </el-menu>
       </el-scrollbar>
@@ -223,7 +232,7 @@ const handleLogout = () => { authStore.logout(); router.push('/login') }
             </template>
             <div class="notify-header">
               <span style="font-weight:600">通知</span>
-              <el-button v-if="unreadCount > 0" type="primary" text size="small" @click="markAllRead">全部已读</el-button>
+              <el-button v-if="unreadCount > 0" type="primary" text size="small" class="btn-neutral" @click="markAllRead">全部已读</el-button>
             </div>
             <el-scrollbar max-height="320px">
               <div v-if="notifications.length === 0" style="text-align:center;padding:20px;color:#909399">暂无通知</div>
@@ -242,7 +251,7 @@ const handleLogout = () => { authStore.logout(); router.push('/login') }
           <el-icon><UserFilled /></el-icon>
           <span class="username">{{ authStore.username || 'Admin' }}</span>
           <el-divider direction="vertical" />
-          <el-button type="danger" text size="small" @click="handleLogout">
+          <el-button type="primary" text size="small" class="btn-logout" @click="handleLogout">
             <el-icon style="margin-right:4px"><SwitchButton /></el-icon>退出
           </el-button>
         </div>
@@ -257,28 +266,67 @@ const handleLogout = () => { authStore.logout(); router.push('/login') }
 
 <style scoped>
 .layout-container { height: 100vh; }
-.layout-aside { background-color: #304156; transition: width 0.3s; overflow: hidden; display: flex; flex-direction: column; }
-.logo { height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #263445; flex-shrink: 0; }
-.logo-text { color: #fff; font-size: 16px; font-weight: 600; white-space: nowrap; }
-.layout-header { display: flex; align-items: center; justify-content: space-between; background: #fff; box-shadow: 0 1px 4px rgba(0,21,41,0.08); padding: 0 20px; height: 56px; }
+.layout-aside {
+  background: #fafafa;
+  border-right: 1px solid #e5e7eb;
+  transition: width 0.3s;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.logo {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+.logo-icon { color: #374151; }
+.logo-text { color: #1f2937; font-size: 15px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; }
+.layout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 20px;
+  height: 56px;
+}
 .header-left { display: flex; align-items: center; gap: 12px; }
-.collapse-btn { font-size: 20px; cursor: pointer; color: #606266; transition: color 0.2s; }
-.collapse-btn:hover { color: #409EFF; }
-.page-title { font-size: 16px; font-weight: 500; color: #303133; }
-.header-right { display: flex; align-items: center; gap: 8px; color: #606266; }
+.collapse-btn { font-size: 18px; cursor: pointer; color: #6b7280; transition: color 0.2s; }
+.collapse-btn:hover { color: #1f2937; }
+.page-title { font-size: 15px; font-weight: 500; color: #1f2937; }
+.header-right { display: flex; align-items: center; gap: 8px; color: #6b7280; }
 .username { font-size: 14px; }
-.layout-main { background: #f0f2f5; padding: 20px; overflow-y: auto; }
-.el-menu { border-right: none; }
-.notify-icon { cursor: pointer; color: #606266; transition: color 0.2s; }
-.notify-icon:hover { color: #409EFF; }
+.layout-main { background: #f1f3f5; padding: 20px; overflow-y: auto; }
+
+.sidebar-menu { border-right: none; }
+.sidebar-menu :deep(.el-menu-item),
+.sidebar-menu :deep(.el-sub-menu__title) { color: #4b5563; }
+.sidebar-menu :deep(.el-menu-item:hover),
+.sidebar-menu :deep(.el-sub-menu__title:hover) { background: #f3f4f6 !important; color: #1f2937; }
+.sidebar-menu :deep(.el-menu-item.is-active) {
+  background: #eef1f5 !important;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.notify-icon { cursor: pointer; color: #6b7280; transition: color 0.2s; }
+.notify-icon:hover { color: #1f2937; }
 .notify-badge { cursor: pointer; }
-.notify-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #ebeef5; margin-bottom: 8px; }
-.notify-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 8px 4px; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
-.notify-item.unread { background: #f0f9ff; }
-.notify-item:hover { background: #f5f7fa; }
+.notify-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #e5e7eb; margin-bottom: 8px; }
+.notify-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 8px 4px; border-bottom: 1px solid #f3f4f6; cursor: pointer; }
+.notify-item.unread { background: #f8fafc; }
+.notify-item:hover { background: #f3f4f6; }
 .notify-body { flex: 1; min-width: 0; }
-.notify-title { font-size: 13px; font-weight: 500; color: #303133; }
-.notify-content { font-size: 12px; color: #909399; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.notify-time { font-size: 11px; color: #c0c4cc; margin-top: 4px; }
+.notify-title { font-size: 13px; font-weight: 500; color: #1f2937; }
+.notify-content { font-size: 12px; color: #6b7280; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.notify-time { font-size: 11px; color: #9ca3af; margin-top: 4px; }
 .notify-del { flex-shrink: 0; }
+.btn-neutral { color: #374151; }
+.btn-logout { color: #6b7280; }
+.btn-logout:hover { color: #1f2937; }
 </style>

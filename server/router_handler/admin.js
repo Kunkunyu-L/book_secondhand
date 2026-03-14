@@ -1,4 +1,5 @@
 const db = require("../db/config");
+const bcrypt = require("bcryptjs");
 
 // Promise 包装 db.query
 const query = (sql, params = []) => {
@@ -67,6 +68,7 @@ exports.getUsers = async (req, res) => {
     const offset = (page - 1) * pageSize;
     const keyword = req.query.keyword || "";
     const status = req.query.status;
+    const role = req.query.role;
 
     let where = "WHERE 1=1";
     const params = [];
@@ -79,6 +81,10 @@ exports.getUsers = async (req, res) => {
     if (status !== undefined && status !== "" && status !== "all") {
       where += " AND status = ?";
       params.push(Number(status));
+    }
+    if (role && role !== "all") {
+      where += " AND role = ?";
+      params.push(role);
     }
 
     const countResult = await query(`SELECT COUNT(*) as total FROM user ${where}`, params);
@@ -104,6 +110,58 @@ exports.updateUserStatus = async (req, res) => {
     if (!id || status === undefined) return res.cc("参数不完整", 400);
     await query("UPDATE user SET status = ? WHERE id = ?", [status, id]);
     res.send({ status: 200, message: "更新用户状态成功" });
+  } catch (err) {
+    res.cc(err);
+  }
+};
+
+exports.updateUserRole = async (req, res) => {
+  try {
+    const { id, role } = req.body;
+    if (!id || !role) return res.cc("参数不完整", 400);
+    if (!["superAdmin", "operationAdmin", "customerService", "user"].includes(role)) return res.cc("角色类型无效", 400);
+    await query("UPDATE user SET role = ? WHERE id = ?", [role, id]);
+    res.send({ status: 200, message: "更新用户角色成功" });
+  } catch (err) {
+    res.cc(err);
+  }
+};
+
+exports.addUser = async (req, res) => {
+  try {
+    const { username, password, phone, nickname, role } = req.body;
+
+    if (!username || !password) return res.cc("用户名和密码不能为空", 400);
+
+    // 检查用户名是否已存在
+    const existingUser = await query("SELECT id FROM user WHERE username = ?", [username]);
+    if (existingUser.length > 0) return res.cc("用户名已存在", 400);
+
+    // 设置默认值
+    const userRole = role || "user";
+    const userNickname = nickname || "";
+    const userPhone = phone || "";
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+    // 加密密码
+    const hashedPassword = bcrypt.hashSync(password, 10);
+
+    // 插入新用户
+    const result = await query("INSERT INTO user (username, password, phone, nickname, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+      username,
+      hashedPassword,
+      userPhone,
+      userNickname,
+      userRole,
+      1, // 默认状态为正常
+      now
+    ]);
+
+    res.send({
+      status: 200,
+      message: "添加用户成功",
+      data: { id: result.insertId }
+    });
   } catch (err) {
     res.cc(err);
   }
@@ -900,6 +958,128 @@ exports.deleteCoupon = async (req, res) => {
     await query("DELETE FROM user_coupon WHERE coupon_id=?", [id]);
     await query("DELETE FROM coupon WHERE id=?", [id]);
     res.send({ status: 200, message: "删除优惠券成功" });
+  } catch (err) {
+    res.cc(err);
+  }
+};
+
+// ===================== 帖子管理 =====================
+
+exports.getDiscoverPosts = async (req, res) => {
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 10));
+    const offset = (page - 1) * pageSize;
+    const keyword = req.query.keyword || "";
+    const status = req.query.status || "";
+
+    let where = "WHERE 1=1";
+    const params = [];
+
+    if (keyword) {
+      where += " AND (p.content LIKE ? OR u.username LIKE ? OR u.nickname LIKE ?)";
+      const kw = `%${keyword}%`;
+      params.push(kw, kw, kw);
+    }
+    if (status && status !== "all") {
+      where += " AND p.status = ?";
+      params.push(Number(status));
+    }
+
+    const countResult = await query(`SELECT COUNT(*) as total FROM discover_post p LEFT JOIN user u ON p.user_id = u.id ${where}`, params);
+    const posts = await query(
+      `SELECT p.id, p.user_id, p.content, p.images, p.like_count, p.comment_count, p.create_time, p.status,
+             u.username, u.nickname
+      FROM discover_post p
+      LEFT JOIN user u ON p.user_id = u.id
+      ${where}
+      ORDER BY p.create_time DESC LIMIT ? OFFSET ?`,
+      [...params, pageSize, offset]
+    );
+
+    res.send({
+      status: 200,
+      message: "获取帖子列表成功",
+      data: { list: posts, total: countResult[0].total, page, pageSize },
+    });
+  } catch (err) {
+    res.cc(err);
+  }
+};
+
+exports.deleteDiscoverPost = async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (!id) return res.cc("参数不完整", 400);
+
+    // 删除相关点赞记录
+    await query("DELETE FROM discover_post_like WHERE post_id=?", [id]);
+    // 删除相关评论记录
+    await query("DELETE FROM discover_post_comment WHERE post_id=?", [id]);
+    // 删除帖子
+    await query("DELETE FROM discover_post WHERE id=?", [id]);
+
+    res.send({ status: 200, message: "删除帖子成功" });
+  } catch (err) {
+    res.cc(err);
+  }
+};
+
+exports.getDiscoverComments = async (req, res) => {
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 10));
+    const offset = (page - 1) * pageSize;
+    const postId = req.query.post_id || "";
+    const keyword = req.query.keyword || "";
+
+    let where = "WHERE 1=1";
+    const params = [];
+
+    if (postId) {
+      where += " AND c.post_id = ?";
+      params.push(postId);
+    }
+    if (keyword) {
+      where += " AND (c.content LIKE ? OR u.username LIKE ? OR u.nickname LIKE ?)";
+      const kw = `%${keyword}%`;
+      params.push(kw, kw, kw);
+    }
+
+    const countResult = await query(
+      `SELECT COUNT(*) as total FROM discover_post_comment c LEFT JOIN user u ON c.user_id = u.id ${where}`,
+      params
+    );
+    const comments = await query(
+      `SELECT c.id, c.post_id, c.user_id, c.content, c.create_time, c.status,
+             u.username, u.nickname,
+             p.content as post_content
+      FROM discover_post_comment c
+      LEFT JOIN user u ON c.user_id = u.id
+      LEFT JOIN discover_post p ON c.post_id = p.id
+      ${where}
+      ORDER BY c.create_time DESC LIMIT ? OFFSET ?`,
+      [...params, pageSize, offset]
+    );
+
+    res.send({
+      status: 200,
+      message: "获取评论列表成功",
+      data: { list: comments, total: countResult[0].total, page, pageSize },
+    });
+  } catch (err) {
+    res.cc(err);
+  }
+};
+
+exports.deleteDiscoverComment = async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (!id) return res.cc("参数不完整", 400);
+
+    await query("DELETE FROM discover_post_comment WHERE id=?", [id]);
+
+    res.send({ status: 200, message: "删除评论成功" });
   } catch (err) {
     res.cc(err);
   }

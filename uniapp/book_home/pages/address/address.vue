@@ -34,44 +34,7 @@
     <!-- 添加按钮 -->
     <button class="add-btn" @click="showForm = true">+ 新增收货地址</button>
 
-    <!-- 添加/编辑表单弹窗 -->
-    <uni-popup ref="formPopup" type="bottom" v-if="showForm" :is-mask-click="false">
-      <view class="form-popup">
-        <view class="form-header">
-          <text class="form-title">{{ editingId ? '编辑地址' : '新增地址' }}</text>
-          <view @click="closeForm">
-            <uni-icons type="closeempty" size="20" color="#999"></uni-icons>
-          </view>
-        </view>
-        <view class="form-item">
-          <text class="form-label">收货人</text>
-          <input class="form-input" v-model="form.name" placeholder="请输入收货人姓名" />
-        </view>
-        <view class="form-item">
-          <text class="form-label">手机号</text>
-          <input class="form-input" v-model="form.phone" placeholder="请输入手机号" type="number" maxlength="11" />
-        </view>
-        <view class="form-item">
-          <text class="form-label">所在地区</text>
-          <input class="form-input" v-model="form.province" placeholder="省" style="width:30%;" />
-          <input class="form-input" v-model="form.city" placeholder="市" style="width:30%;" />
-          <input class="form-input" v-model="form.district" placeholder="区" style="width:30%;" />
-        </view>
-        <view class="form-item">
-          <text class="form-label">详细地址</text>
-          <input class="form-input" v-model="form.detail" placeholder="街道、门牌号等" />
-        </view>
-        <view class="form-item">
-          <label class="form-check">
-            <checkbox :checked="form.is_default" @click="form.is_default = !form.is_default" />
-            <text>设为默认地址</text>
-          </label>
-        </view>
-        <button class="save-btn" @click="saveAddress">保存</button>
-      </view>
-    </uni-popup>
-    
-    <!-- 简易表单模式（不依赖popup） -->
+    <!-- 表单：手动填写省市区 -->
     <view class="form-mask" v-if="showForm" @click="closeForm"></view>
     <view class="form-panel" v-if="showForm">
       <view class="form-header">
@@ -90,25 +53,10 @@
       </view>
       <view class="form-item">
         <text class="form-label">所在地区</text>
-        <view class="region-row" @click="openRegionPickerByState">
-          <text class="region-item" :class="{ placeholder: !form.province }">{{ form.province || '请选择省' }}</text>
-          <text class="region-item" :class="{ placeholder: !form.city }">{{ form.city || '请选择市' }}</text>
-          <text class="region-item" :class="{ placeholder: !form.district }">{{ form.district || '请选择区' }}</text>
-          <uni-icons type="right" size="14" color="#999"></uni-icons>
-        </view>
+        <input class="form-input" v-model="form.province" placeholder="省" style="width:30%;" />
+        <input class="form-input" v-model="form.city" placeholder="市" style="width:30%;" />
+        <input class="form-input" v-model="form.district" placeholder="区" style="width:30%;" />
       </view>
-      <!-- 地区选择弹窗 -->
-      <uni-popup ref="regionPopup" type="bottom" background-color="#fff">
-        <view class="region-popup">
-          <view class="region-popup-title">{{ regionStepText }}</view>
-          <scroll-view scroll-y class="region-list" v-if="regionOptions.length">
-            <view class="region-opt" v-for="opt in regionOptions" :key="opt.id" @click="onRegionSelect(opt)">
-              {{ opt.name }}
-            </view>
-          </scroll-view>
-          <view v-else class="region-loading">{{ regionLoading ? '加载中...' : '暂无数据' }}</view>
-        </view>
-      </uni-popup>
       <view class="form-item">
         <text class="form-label">详细地址</text>
         <input class="form-input" v-model="form.detail" placeholder="街道、门牌号等" />
@@ -123,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import request from '@/untils/request.js'
 
@@ -133,17 +81,6 @@ const loading = ref(false)
 const showForm = ref(false)
 const editingId = ref(null)
 const form = ref({ name: '', phone: '', province: '', city: '', district: '', detail: '', is_default: false })
-// 地区选择：存储 id 用于 getchildren
-const provinceId = ref('')
-const cityId = ref('')
-const regionStep = ref('province') // province | city | district
-const regionOptions = ref([])
-const regionLoading = ref(false)
-const regionPopup = ref(null)
-const regionStepText = computed(() => {
-  const m = { province: '选择省份', city: '选择城市', district: '选择区县' }
-  return m[regionStep.value] || ''
-})
 
 onLoad((options) => {
   if (options.select === '1') isSelectMode.value = true
@@ -170,8 +107,6 @@ const selectAddress = (item) => {
 const editAddress = (item) => {
   editingId.value = item.id
   form.value = { name: item.name, phone: item.phone, province: item.province, city: item.city, district: item.district, detail: item.detail, is_default: !!item.is_default }
-  provinceId.value = ''
-  cityId.value = ''
   showForm.value = true
 }
 
@@ -179,101 +114,6 @@ const closeForm = () => {
   showForm.value = false
   editingId.value = null
   form.value = { name: '', phone: '', province: '', city: '', district: '', detail: '', is_default: false }
-  provinceId.value = ''
-  cityId.value = ''
-}
-
-// 省市区走后端代理，避免腾讯地图 CORS
-const loadProvinces = async () => {
-  regionLoading.value = true
-  regionOptions.value = []
-  try {
-    const res = await request({ url: '/region/list', method: 'GET' })
-    if (res?.data) regionOptions.value = res.data
-  } catch (e) {}
-  regionLoading.value = false
-}
-
-const loadChildren = async (parentId) => {
-  regionLoading.value = true
-  regionOptions.value = []
-  try {
-    const res = await request({ url: `/region/children?id=${encodeURIComponent(parentId)}`, method: 'GET' })
-    if (res?.data) regionOptions.value = res.data
-  } catch (e) {}
-  regionLoading.value = false
-}
-
-// 根据当前已选状态决定打开省/市/区（选完省后点“所在地区”打开市，再选市后打开区）
-const openRegionPickerByState = async () => {
-  if (!form.value.province) {
-    await openRegionPicker('province')
-    return
-  }
-  if (!form.value.city) {
-    if (!provinceId.value) {
-      uni.showToast({ title: '请先选择省份', icon: 'none' })
-      return
-    }
-    await openRegionPicker('city')
-    return
-  }
-  if (!form.value.district) {
-    if (!cityId.value) {
-      uni.showToast({ title: '请先选择城市', icon: 'none' })
-      return
-    }
-    await openRegionPicker('district')
-    return
-  }
-  await openRegionPicker('district')
-}
-
-const openRegionPicker = async (step) => {
-  regionStep.value = step
-  regionOptions.value = []
-  if (step === 'province') {
-    form.value.province = ''
-    form.value.city = ''
-    form.value.district = ''
-    provinceId.value = ''
-    cityId.value = ''
-    await loadProvinces()
-  } else if (step === 'city') {
-    if (!provinceId.value) {
-      uni.showToast({ title: '请先选择省份', icon: 'none' })
-      return
-    }
-    form.value.city = ''
-    form.value.district = ''
-    cityId.value = ''
-    await loadChildren(provinceId.value)
-  } else if (step === 'district') {
-    if (!cityId.value) {
-      uni.showToast({ title: '请先选择城市', icon: 'none' })
-      return
-    }
-    form.value.district = ''
-    await loadChildren(cityId.value)
-  }
-  regionPopup.value?.open()
-}
-
-const onRegionSelect = (opt) => {
-  if (regionStep.value === 'province') {
-    form.value.province = opt.name
-    provinceId.value = opt.id
-    regionPopup.value?.close()
-    openRegionPicker('city')
-  } else if (regionStep.value === 'city') {
-    form.value.city = opt.name
-    cityId.value = opt.id
-    regionPopup.value?.close()
-    openRegionPicker('district')
-  } else if (regionStep.value === 'district') {
-    form.value.district = opt.name
-    regionPopup.value?.close()
-  }
 }
 
 const saveAddress = async () => {

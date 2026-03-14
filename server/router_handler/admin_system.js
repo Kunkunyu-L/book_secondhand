@@ -3,47 +3,6 @@ const query = (sql, params = []) => new Promise((resolve, reject) => {
   db.query(sql, params, (err, r) => (err ? reject(err) : resolve(r)));
 });
 
-// ==================== 角色权限管理 ====================
-exports.getRoles = async (req, res) => {
-  try {
-    const list = await query("SELECT * FROM admin_role ORDER BY id ASC");
-    list.forEach(r => {
-      if (typeof r.permissions === "string") {
-        try { r.permissions = JSON.parse(r.permissions); } catch { r.permissions = []; }
-      }
-    });
-    res.send({ status: 200, data: list });
-  } catch (err) { res.cc(err); }
-};
-
-exports.saveRole = async (req, res) => {
-  try {
-    const { id, name, description, permissions, status } = req.body;
-    if (!name) return res.cc("角色名不能为空", 400);
-    const permJson = JSON.stringify(permissions || []);
-    if (id) {
-      await query("UPDATE admin_role SET name=?, description=?, permissions=?, status=? WHERE id=?",
-        [name, description || "", permJson, status !== undefined ? status : 1, id]);
-    } else {
-      await query("INSERT INTO admin_role SET ?", {
-        name, description: description || "", permissions: permJson, status: status !== undefined ? status : 1,
-      });
-    }
-    res.send({ status: 200, message: "保存成功" });
-  } catch (err) { res.cc(err); }
-};
-
-exports.deleteRole = async (req, res) => {
-  try {
-    const { id } = req.body;
-    if (!id) return res.cc("参数不完整", 400);
-    if (id <= 3) return res.cc("系统默认角色不可删除", 400);
-    await query("UPDATE user SET role_id=NULL WHERE role_id=?", [id]);
-    await query("DELETE FROM admin_role WHERE id=?", [id]);
-    res.send({ status: 200, message: "删除成功" });
-  } catch (err) { res.cc(err); }
-};
-
 // ==================== 基础设置 ====================
 exports.getConfigs = async (req, res) => {
   try {
@@ -158,5 +117,32 @@ exports.deleteNotification = async (req, res) => {
     if (!id) return res.cc("参数不完整", 400);
     await query("DELETE FROM notification WHERE id=?", [id]);
     res.send({ status: 200, message: "已删除" });
+  } catch (err) { res.cc(err); }
+};
+
+// ==================== 角色页面权限（存 system_config.role_page_permission） ====================
+exports.getRolePagePermission = async (req, res) => {
+  try {
+    const rows = await query("SELECT config_value FROM system_config WHERE config_key = ?", ["role_page_permission"]);
+    let data = { superAdmin: [], operationAdmin: [], customerService: [], user: [] };
+    if (rows.length > 0 && rows[0].config_value) {
+      try {
+        data = JSON.parse(rows[0].config_value);
+      } catch (e) { /* 使用默认 */ }
+    }
+    res.send({ status: 200, data });
+  } catch (err) { res.cc(err); }
+};
+
+exports.saveRolePagePermission = async (req, res) => {
+  try {
+    const { rolePagePermission } = req.body;
+    if (!rolePagePermission || typeof rolePagePermission !== "object") return res.cc("参数错误", 400);
+    const value = JSON.stringify(rolePagePermission);
+    const updated = await query("UPDATE system_config SET config_value = ? WHERE config_key = ?", [value, "role_page_permission"]);
+    if (updated.affectedRows === 0) {
+      await query("INSERT INTO system_config (config_key, config_value) VALUES (?, ?)", ["role_page_permission", value]);
+    }
+    res.send({ status: 200, message: "保存成功" });
   } catch (err) { res.cc(err); }
 };

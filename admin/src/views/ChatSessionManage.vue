@@ -70,16 +70,18 @@ onMounted(loadData)
 
 <template>
   <el-card shadow="never">
-    <div class="toolbar">
-      <el-select v-model="statusFilter" style="width:120px" @change="handleSearch">
-        <el-option label="全部" value="all" /><el-option label="进行中" value="active" /><el-option label="已关闭" value="closed" />
-      </el-select>
-      <el-input v-model="keyword" placeholder="搜索用户名" clearable style="width:220px" @keyup.enter="handleSearch" @clear="handleSearch" />
-      <el-button type="primary" @click="handleSearch">搜索</el-button>
+    <div class="admin-toolbar">
+      <div class="admin-toolbar-filters">
+        <el-select v-model="statusFilter" style="width:120px" @change="handleSearch">
+          <el-option label="全部" value="all" /><el-option label="进行中" value="active" /><el-option label="已关闭" value="closed" />
+        </el-select>
+        <el-input v-model="keyword" placeholder="搜索用户名" clearable style="width:220px" @keyup.enter="handleSearch" @clear="handleSearch" />
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
+      </div>
     </div>
 
     <el-table :data="tableData" v-loading="loading" border stripe>
-      <el-table-column prop="id" label="ID" width="60" align="center" />
+      <el-table-column type="index" label="序号" width="60" align="center" />
       <el-table-column label="发起用户" width="120">
         <template #default="{ row }">{{ row.nickname || row.username }}</template>
       </el-table-column>
@@ -139,12 +141,11 @@ onMounted(loadData)
 </template>
 
 <style scoped>
-.toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
 .pagination { display: flex; justify-content: flex-end; margin-top: 16px; }
 .msg-item { margin-bottom: 12px; }
 .msg-right { text-align: right; }
 .msg-name { font-size: 12px; color: #909399; margin-bottom: 4px; }
 .msg-time { margin-left: 8px; }
 .msg-bubble { display: inline-block; padding: 8px 12px; border-radius: 8px; background: #f4f4f5; max-width: 80%; text-align: left; font-size: 13px; word-break: break-all; }
-.bubble-blue { background: #ecf5ff; color: #409EFF; }
+.bubble-blue { background: #f1f5f9; color: #374151; }
 </style>

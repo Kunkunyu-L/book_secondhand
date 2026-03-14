@@ -65,26 +65,30 @@ onMounted(() => { loadData(); loadCategories() })
 
 <template>
   <el-card shadow="never">
-    <div class="toolbar">
-      <el-select v-model="statusFilter" style="width:110px" @change="handleSearch">
-        <el-option label="全部状态" value="all" />
-        <el-option label="在售" value="onsale" />
-        <el-option label="下架" value="offline" />
-        <el-option label="审核中" value="reviewing" />
-        <el-option label="违规" value="violation" />
-        <el-option label="已售" value="sold" />
-      </el-select>
-      <el-select v-model="categoryFilter" clearable placeholder="全部分类" style="width:130px" @change="handleSearch">
-        <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
-      </el-select>
-      <el-input v-model="keyword" placeholder="搜索书名/作者/ISBN" clearable style="width:260px"
-        @keyup.enter="handleSearch" @clear="handleSearch" />
-      <el-button type="primary" @click="handleSearch">搜索</el-button>
-      <el-button @click="handleExport">导出</el-button>
+    <div class="admin-toolbar">
+      <div class="admin-toolbar-filters">
+        <el-select v-model="statusFilter" style="width:110px" @change="handleSearch">
+          <el-option label="全部状态" value="all" />
+          <el-option label="在售" value="onsale" />
+          <el-option label="下架" value="offline" />
+          <el-option label="审核中" value="reviewing" />
+          <el-option label="违规" value="violation" />
+          <el-option label="已售" value="sold" />
+        </el-select>
+        <el-select v-model="categoryFilter" clearable placeholder="全部分类" style="width:130px" @change="handleSearch">
+          <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
+        </el-select>
+        <el-input v-model="keyword" placeholder="搜索书名/作者/ISBN" clearable style="width:260px"
+          @keyup.enter="handleSearch" @clear="handleSearch" />
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
+      </div>
+      <div class="admin-toolbar-actions">
+        <el-button @click="handleExport">导出</el-button>
+      </div>
     </div>
 
     <el-table :data="tableData" v-loading="loading" border stripe>
-      <el-table-column prop="id" label="ID" width="60" align="center" />
+      <el-table-column type="index" label="序号" width="60" align="center" />
       <el-table-column label="封面" width="70" align="center">
         <template #default="{ row }">
           <el-image v-if="row.cover_img" :src="row.cover_img" style="width:36px;height:46px;border-radius:2px" fit="cover" :preview-src-list="[row.cover_img]" preview-teleported />
@@ -142,6 +146,5 @@ onMounted(() => { loadData(); loadCategories() })
 </template>
 
 <style scoped>
-.toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
 .pagination { display: flex; justify-content: flex-end; margin-top: 16px; }
 </style>

@@ -6,16 +6,33 @@
     </view>
     <!-- 消息列表：仅此区域可滚动 -->
     <scroll-view scroll-y class="msg-list" :scroll-top="scrollTop" :scroll-into-view="scrollIntoView">
-      <view class="msg-item" v-for="(m, idx) in messages" :key="m.id" :id="'msg-' + idx"
-        :class="{ mine: m.sender_id == userId }">
-        <view class="msg-bubble" :class="{ 'bubble-mine': m.sender_id == userId }">
-          <text class="sender" v-if="m.sender_id != userId">{{ m.sender_name || '对方' }}</text>
-          <image v-if="m.msg_type === 'image'" :src="m.content" mode="widthFix" style="max-width: 400rpx; border-radius: 8rpx;"
-            @click="previewImg(m.content)" />
-          <text v-else class="msg-text">{{ m.content }}</text>
-          <text class="msg-time">{{ formatMsgTime(m.created_at) }}</text>
+      <block v-for="(m, idx) in messages" :key="m.id">
+        <!-- 时间分割线 -->
+        <view v-if="shouldShowTime(idx)" class="time-divider">
+          <text class="time-divider-text">{{ formatMsgTimeFull(m.created_at) }}</text>
         </view>
-      </view>
+        <!-- 气泡 -->
+        <view class="msg-item" :id="'msg-' + idx" :class="{ mine: m.sender_id == userId }">
+          <image
+            class="avatar"
+            :class="{ mine: m.sender_id == userId }"
+            :src="m.sender_id == userId ? (userAvatar || '/static/common.jpg') : (m.sender_avatar || '/static/common.jpg')"
+            mode="aspectFill"
+          />
+          <view class="msg-main">
+            <view class="msg-bubble" :class="{ 'bubble-mine': m.sender_id == userId }">
+              <image
+                v-if="m.msg_type === 'image'"
+                :src="m.content"
+                mode="widthFix"
+                class="msg-image"
+                @click="previewImg(m.content)"
+              />
+              <text v-else class="msg-text">{{ m.content }}</text>
+            </view>
+          </view>
+        </view>
+      </block>
       <view v-if="messages.length === 0" class="empty-msg">暂无消息，发送一条试试~</view>
     </scroll-view>
 
@@ -43,6 +60,7 @@ export default {
       scrollTop: 0,
       scrollIntoView: '',
       userId: '',
+      userAvatar: '',
       socket: null,
       pollTimer: null,
       socketReady: false  // 连接成功后才可发送，用于隐藏「连接中」提示
@@ -54,6 +72,7 @@ export default {
     uni.setNavigationBarTitle({ title: this.targetName })
     const userInfo = uni.getStorageSync('userInfo')
     this.userId = userInfo?.id || ''
+    this.userAvatar = userInfo?.avatar || ''
   },
   onShow() {
     this.loadMessages()
@@ -139,29 +158,36 @@ export default {
     },
 
     sendMessage() {
-      if (!this.inputText.trim()) return
+      const text = this.inputText.trim()
+      if (!text) return
 
-      if (this.socket?.connected && this.socketReady) {
-        this.socket.emit('send_message', {
-          session_id: this.sessionId,
-          content: this.inputText.trim(),
-          msg_type: 'text'
-        }, (res) => {
-          if (res?.success) {
-            this.messages.push(res.message)
-            this.inputText = ''
-            this.$nextTick(() => this.scrollToBottom())
-          } else {
-            uni.showToast({ title: res?.error || '发送失败', icon: 'none' })
-          }
-        })
-      } else {
-        this.sendViaRest()
+      const payload = {
+        session_id: this.sessionId,
+        content: text,
+        msg_type: 'text'
       }
+
+      // 统一走 REST 发送，Socket 仅用于收消息/已读
+      this.sendViaRest(payload)
     },
 
-    async sendViaRest() {
-      uni.showToast({ title: this.socketReady ? '请稍后重试发送' : '连接中...请稍后', icon: 'none' })
+    async sendViaRest(payload) {
+      try {
+        const res = await request({
+          url: '/chat/messages',
+          method: 'POST',
+          data: payload
+        })
+        if (res.status === 200 && res.data) {
+          this.messages.push(res.data)
+          this.inputText = ''
+          this.$nextTick(() => this.scrollToBottom())
+        } else {
+          uni.showToast({ title: res.message || '发送失败', icon: 'none' })
+        }
+      } catch (e) {
+        uni.showToast({ title: '发送失败，请稍后重试', icon: 'none' })
+      }
     },
 
     scrollToBottom() {
@@ -178,22 +204,47 @@ export default {
       if (!time) return ''
       const d = new Date(time)
       return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+    },
+
+    formatMsgTimeFull(time) {
+      if (!time) return ''
+      const d = new Date(time)
+      const h = String(d.getHours()).padStart(2, '0')
+      const m = String(d.getMinutes()).padStart(2, '0')
+      return `${h}:${m}`
+    },
+
+    shouldShowTime(index) {
+      if (index === 0) return true
+      const cur = this.messages[index]
+      const prev = this.messages[index - 1]
+      if (!cur.created_at || !prev.created_at) return false
+      const t1 = new Date(prev.created_at).getTime()
+      const t2 = new Date(cur.created_at).getTime()
+      // 间隔超过 5 分钟才显示一次时间
+      return Math.abs(t2 - t1) > 5 * 60 * 1000
     }
   }
 }
 </script>
 
 <style scoped>
-.chat-page { position: relative; height: 100vh; background: #f5f5f5; box-sizing: border-box; }
-.msg-list { position: absolute; left: 0; right: 0; top: 0; bottom: 120rpx; padding: 20rpx; }
-.msg-item { margin-bottom: 20rpx; display: flex; }
-.msg-item.mine { justify-content: flex-end; }
-.msg-bubble { display: inline-block; max-width: 70%; padding: 16rpx 24rpx; border-radius: 16rpx;
-  background: #fff; box-shadow: 0 2rpx 6rpx rgba(0,0,0,0.06); }
+.chat-page { position: relative; height: 100vh; background: #e5e5e5; box-sizing: border-box; }
+.msg-list { position: absolute; left: 0; right: 0; top: 0; bottom: 120rpx; padding: 20rpx 24rpx; box-sizing: border-box; }
+.time-divider { text-align: center; margin: 16rpx 0; }
+.time-divider-text { display: inline-block; padding: 6rpx 16rpx; border-radius: 20rpx; background: rgba(0,0,0,0.1); color: #fff; font-size: 22rpx; }
+.msg-item { margin-bottom: 18rpx; display: flex; align-items: flex-end; }
+.msg-item.mine { flex-direction: row-reverse; }
+.avatar { width: 72rpx; height: 72rpx; border-radius: 50%; background: #ddd; }
+.avatar.mine { margin-left: 16rpx; }
+.avatar:not(.mine) { margin-right: 16rpx; }
+.msg-main { max-width: 70%; display: flex; flex-direction: column; }
+.msg-bubble { display: inline-block; padding: 16rpx 20rpx; border-radius: 16rpx; background: #fff; box-shadow: 0 2rpx 6rpx rgba(0,0,0,0.06); }
+.msg-item.mine .msg-bubble { border-bottom-right-radius: 4rpx; border-bottom-left-radius: 16rpx; }
+.msg-item:not(.mine) .msg-bubble { border-bottom-left-radius: 4rpx; border-bottom-right-radius: 16rpx; }
 .bubble-mine { background: #95ec69; }
-.sender { display: block; font-size: 22rpx; color: #999; margin-bottom: 6rpx; }
-.msg-text { font-size: 28rpx; color: #333; word-break: break-all; line-height: 1.5; }
-.msg-time { display: block; font-size: 20rpx; color: #bbb; margin-top: 6rpx; text-align: right; }
+.msg-text { font-size: 28rpx; color: #111; word-break: break-all; line-height: 1.6; }
+.msg-image { max-width: 420rpx; border-radius: 12rpx; }
 .empty-msg { text-align: center; padding: 80rpx 0; color: #ccc; font-size: 26rpx; }
 
 .input-bar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 16rpx 20rpx; background: #fff;

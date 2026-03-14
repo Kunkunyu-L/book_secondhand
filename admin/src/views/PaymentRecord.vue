@@ -77,22 +77,26 @@ onMounted(loadData)
     </el-row>
 
     <el-card shadow="never">
-      <div class="toolbar">
-        <el-select v-model="statusFilter" style="width:130px" @change="handleSearch">
-          <el-option label="全部状态" value="all" />
-          <el-option label="待支付" value="pending" />
-          <el-option label="支付成功" value="success" />
-          <el-option label="支付失败" value="failed" />
-          <el-option label="已退款" value="refunded" />
-        </el-select>
-        <el-input v-model="keyword" placeholder="搜索订单号/流水号/用户名" clearable style="width:280px"
-          @keyup.enter="handleSearch" @clear="handleSearch" />
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleExport">导出CSV</el-button>
+      <div class="admin-toolbar">
+        <div class="admin-toolbar-filters">
+          <el-select v-model="statusFilter" style="width:130px" @change="handleSearch">
+            <el-option label="全部状态" value="all" />
+            <el-option label="待支付" value="pending" />
+            <el-option label="支付成功" value="success" />
+            <el-option label="支付失败" value="failed" />
+            <el-option label="已退款" value="refunded" />
+          </el-select>
+          <el-input v-model="keyword" placeholder="搜索订单号/流水号/用户名" clearable style="width:280px"
+            @keyup.enter="handleSearch" @clear="handleSearch" />
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+        </div>
+        <div class="admin-toolbar-actions">
+          <el-button @click="handleExport">导出CSV</el-button>
+        </div>
       </div>
 
       <el-table :data="tableData" v-loading="loading" border stripe>
-        <el-table-column prop="id" label="ID" width="60" align="center" />
+        <el-table-column type="index" label="序号" width="60" align="center" />
         <el-table-column prop="order_no" label="订单号" width="180" show-overflow-tooltip />
         <el-table-column label="用户" width="110">
           <template #default="{ row }">{{ row.nickname || row.username }}</template>
@@ -126,6 +130,5 @@ onMounted(loadData)
 </template>
 
 <style scoped>
-.toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
 .pagination { display: flex; justify-content: flex-end; margin-top: 16px; }
 </style>

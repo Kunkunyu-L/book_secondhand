@@ -76,25 +76,17 @@
 	<!-- 底部留白 -->
 	<view style="height: 120rpx;"></view>
 
-    <!-- 底部操作栏 -->
+    <!-- 底部操作栏：左侧收藏，右侧购买、聊一聊 -->
     <view class="action-bar">
       <view class="action-left">
-        <view class="action-icon" @tap="goHome">
-          <uni-icons type="home" size="24" color="#666"></uni-icons>
-          <text class="action-text">首页</text>
-        </view>
-        <view class="action-icon" @tap="contactService">
-          <uni-icons type="headphones" size="24" color="#666"></uni-icons>
-          <text class="action-text">客服</text>
-        </view>
-        <view class="action-icon" @tap="goToCart">
-          <uni-icons type="cart" size="24" color="#666"></uni-icons>
-          <text class="action-text">购物车</text>
+        <view class="action-icon" @tap="toggleFavorite">
+          <uni-icons :type="isFavorited ? 'heart-filled' : 'heart'" size="24" :color="isFavorited ? '#FF5500' : '#666'"></uni-icons>
+          <text class="action-text">{{ isFavorited ? '已收藏' : '收藏' }}</text>
         </view>
       </view>
       <view class="action-right">
-        <button class="add-cart-btn" @tap="addToCart">加入购物车</button>
-        <button class="buy-now-btn" @tap="buyNow">立即购买</button>
+        <button class="buy-now-btn" @tap="buyNow">购买</button>
+        <button class="chat-btn" @tap="contactService">聊一聊</button>
       </view>
     </view>
   </view>
@@ -206,27 +198,6 @@ export default {
       }).catch(() => {
         uni.showToast({ title: '创建会话失败', icon: 'none' })
       })
-    },
-    goToCart() {
-      uni.switchTab({ url: '/pages/cart/cart' })
-    },
-    async addToCart() {
-	  const token = uni.getStorageSync('token');
-	  if (!token) {
-		  uni.showToast({ title: '请先登录', icon: 'none' });
-		  setTimeout(() => { uni.navigateTo({ url: '/pages/auth/login' }); }, 500);
-		  return;
-	  }
-	  try {
-		  await request({
-			  url: '/cart/add',
-			  method: 'POST',
-			  data: { book_id: this.bookId, book_type: this.bookType, quantity: 1 }
-		  });
-		  uni.showToast({ title: '已加入购物车', icon: 'success' });
-	  } catch (e) {
-		  console.error('加入购物车失败', e);
-	  }
     },
     buyNow() {
 	  const token = uni.getStorageSync('token');

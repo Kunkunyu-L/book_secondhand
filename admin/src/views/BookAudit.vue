@@ -74,7 +74,7 @@ onMounted(loadData)
 
     <!-- 待审核列表 -->
     <el-table v-if="activeTab === 'pending'" :data="tableData" v-loading="loading" border stripe>
-      <el-table-column prop="id" label="ID" width="70" align="center" />
+      <el-table-column type="index" label="序号" width="60" align="center" />
       <el-table-column label="封面" width="70" align="center">
         <template #default="{ row }">
           <el-image v-if="row.cover_img" :src="row.cover_img" style="width: 36px; height: 46px" fit="cover" :preview-src-list="[row.cover_img]" preview-teleported />
@@ -93,16 +93,18 @@ onMounted(loadData)
       <el-table-column prop="create_datetime" label="发布时间" width="170" />
       <el-table-column label="操作" width="220" fixed="right" align="center">
         <template #default="{ row }">
-          <el-button type="success" text size="small" @click="handleApprove(row)">通过</el-button>
-          <el-button type="warning" text size="small" @click="openRejectDialog(row, 'reject')">驳回</el-button>
-          <el-button type="danger" text size="small" @click="openRejectDialog(row, 'violation')">标记违规</el-button>
+          <div style="white-space: nowrap;">
+            <el-button type="success" text size="small" @click="handleApprove(row)">通过</el-button>
+            <el-button type="warning" text size="small" @click="openRejectDialog(row, 'reject')">驳回</el-button>
+            <el-button type="danger" text size="small" @click="openRejectDialog(row, 'violation')">标记违规</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 审核记录 -->
     <el-table v-else :data="tableData" v-loading="loading" border stripe>
-      <el-table-column prop="id" label="ID" width="70" align="center" />
+      <el-table-column type="index" label="序号" width="60" align="center" />
       <el-table-column prop="title" label="书名" min-width="140" show-overflow-tooltip />
       <el-table-column prop="author" label="作者" width="100" />
       <el-table-column prop="seller_name" label="卖家" width="100" />

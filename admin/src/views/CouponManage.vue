@@ -76,14 +76,16 @@ onMounted(loadData)
 
 <template>
   <el-card shadow="never">
-    <div class="toolbar">
-      <el-button type="primary" @click="openAdd">
-        <el-icon style="margin-right:4px"><Plus /></el-icon>新增优惠券
-      </el-button>
+    <div class="admin-toolbar admin-toolbar-actions-only">
+      <div class="admin-toolbar-actions">
+        <el-button type="primary" @click="openAdd">
+          <el-icon style="margin-right:4px"><Plus /></el-icon>新增优惠券
+        </el-button>
+      </div>
     </div>
 
     <el-table :data="tableData" v-loading="loading" border stripe>
-      <el-table-column prop="id" label="ID" width="60" align="center" />
+      <el-table-column type="index" label="序号" width="60" align="center" />
       <el-table-column prop="name" label="名称" min-width="140" />
       <el-table-column label="类型" width="90" align="center">
         <template #default="{ row }">
@@ -170,5 +172,4 @@ onMounted(loadData)
 </template>
 
 <style scoped>
-.toolbar { margin-bottom: 16px; }
 </style>
