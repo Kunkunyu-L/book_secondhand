@@ -16,6 +16,12 @@ router.get("/ticket/detail", clientHandler.getTicketDetail);
 // ========= 优惠券 =========
 router.post("/coupon/claim", clientHandler.claimCoupon);
 router.get("/coupons", clientHandler.getMyCoupons);
+router.get("/coupons/applicable", clientHandler.getApplicableCoupons);
+
+// ========= 余额与提现 =========
+router.get("/balance", clientHandler.getBalance);
+router.post("/withdraw", clientHandler.applyWithdrawal);
+router.get("/withdrawals", clientHandler.getMyWithdrawals);
 
 // ========= 通知 =========
 router.get("/notifications", clientHandler.getMyNotifications);

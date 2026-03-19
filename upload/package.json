@@ -1,0 +1,19 @@
+{
+  "name": "upload-service",
+  "version": "1.0.0",
+  "description": "独立文件/图片上传服务",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "keywords": ["upload", "multer", "express"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "multer": "^2.0.0"
+  }
+}

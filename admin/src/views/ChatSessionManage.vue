@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getChatSessionsApi, assignSessionApi, closeSessionApi, getChatMessagesApi, getServiceStaffApi } from '../api'
+import { formatTime } from '../utils/formatTime'
 
 const tableData = ref<any[]>([])
 const total = ref(0)
@@ -33,10 +34,12 @@ const loadData = async () => {
   } finally { loading.value = false }
 }
 
+const chatScrollbar = ref<any>(null)
+
 const viewChat = async (row: any) => {
   currentSession.value = row
   try {
-    const res: any = await getChatMessagesApi({ session_id: row.id, pageSize: 50 })
+    const res: any = await getChatMessagesApi({ session_id: row.id, pageSize: 100 })
     if (res.status === 200) messages.value = res.data.list || []
   } catch { messages.value = [] }
   chatVisible.value = true
@@ -98,7 +101,9 @@ onMounted(loadData)
       <el-table-column label="状态" width="80" align="center">
         <template #default="{ row }"><el-tag :type="(statusMap[row.status]?.type || '') as any" size="small">{{ statusMap[row.status]?.text }}</el-tag></template>
       </el-table-column>
-      <el-table-column prop="last_message_time" label="最后活跃" width="160" />
+      <el-table-column label="最后活跃" width="160">
+        <template #default="{ row }">{{ formatTime(row.last_message_time) }}</template>
+      </el-table-column>
       <el-table-column label="操作" width="200" fixed="right" align="center">
         <template #default="{ row }">
           <el-button type="primary" text size="small" @click="viewChat(row)">查看</el-button>
@@ -115,7 +120,7 @@ onMounted(loadData)
 
     <!-- 聊天记录弹窗 -->
     <el-dialog v-model="chatVisible" title="聊天记录" width="600px" destroy-on-close>
-      <el-scrollbar max-height="400px">
+      <el-scrollbar ref="chatScrollbar" max-height="400px">
         <div v-if="messages.length === 0" style="text-align:center;padding:30px;color:#909399">暂无消息</div>
         <div v-for="m in messages" :key="m.id" class="msg-item" :class="{ 'msg-right': m.sender_role !== 'user' }">
           <div class="msg-name">{{ m.sender_name || m.sender_role }} <span class="msg-time">{{ m.created_at }}</span></div>

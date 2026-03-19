@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getBookAuditListApi, auditBookApi } from '../api'
+import { formatTime } from '../utils/formatTime'
+import { getImageUrl } from '../utils/image'
 
 const activeTab = ref('pending')
 const tableData = ref<any[]>([])
@@ -77,7 +79,7 @@ onMounted(loadData)
       <el-table-column type="index" label="序号" width="60" align="center" />
       <el-table-column label="封面" width="70" align="center">
         <template #default="{ row }">
-          <el-image v-if="row.cover_img" :src="row.cover_img" style="width: 36px; height: 46px" fit="cover" :preview-src-list="[row.cover_img]" preview-teleported />
+          <el-image v-if="row.cover_img" :src="getImageUrl(row.cover_img)" style="width: 36px; height: 46px" fit="cover" :preview-src-list="[getImageUrl(row.cover_img)]" preview-teleported />
           <span v-else style="color:#c0c4cc">-</span>
         </template>
       </el-table-column>
@@ -117,7 +119,9 @@ onMounted(loadData)
         <template #default="{ row }">{{ row.reason || '-' }}</template>
       </el-table-column>
       <el-table-column prop="admin_name" label="审核人" width="100" />
-      <el-table-column prop="created_at" label="审核时间" width="170" />
+      <el-table-column label="审核时间" width="170">
+        <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
+      </el-table-column>
     </el-table>
 
     <div class="pagination">

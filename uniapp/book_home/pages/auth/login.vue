@@ -35,19 +35,25 @@ export default {
 		//登录按钮被点击
 		async handleLogin() {
 			if (!this.username || !this.password) return uni.showToast({ title: '请填写您的用户名和密码', icon: 'none' });
-			if (!/^[a-zA-Z0-9]+$/.test(this.username)) return uni.showToast({title:'用户名只能包含数字和字母',icon:'none'});
-			if (!/^[a-zA-Z0-9]+$/.test(this.username)) return uni.showToast({ title: '用户名长度为5-10个字符', icon: 'none' });
+			if (!/^[a-zA-Z0-9]+$/.test(this.username)) return uni.showToast({ title: '用户名只能包含数字和字母', icon: 'none' });
 			if (!/^\S{6,12}$/.test(this.password)) return uni.showToast({ title: '密码必须是6-12位非空白字符', icon: 'none' });
 			const arr = { username: this.username, password: this.password }
 			try {
-				const res = await request({url: '/api/login',method: 'POST',data: arr});
-				// 登录成功：后端返回的数据在 res 中
-				// console.log(res); 
-				uni.showToast({ title: res.message || '登录成功', icon: 'success' });
-				//保存token
-				uni.setStorageSync('token', res.token); 
-				// 跳转tabBar页面
-				uni.switchTab({ url: '/pages/index/index' }); 
+				const res = await request({ url: '/api/login', method: 'POST', data: arr });
+				uni.setStorageSync('token', res.token);
+				// 登录成功后获取并缓存用户信息（聊天页面识别自己消息需要）
+				try {
+					const info = await request({ url: '/my/getUserInfo', method: 'GET' });
+					if (info.data) uni.setStorageSync('userInfo', info.data);
+				} catch (e) {}
+				uni.showToast({ title: '登录成功', icon: 'success' });
+				// 返回上一页或跳转首页
+				const pages = getCurrentPages();
+				if (pages.length > 1) {
+					uni.navigateBack();
+				} else {
+					uni.switchTab({ url: '/pages/index/index' });
+				}
 			} catch (err) {
 				console.error('登录失败', err);
 			}

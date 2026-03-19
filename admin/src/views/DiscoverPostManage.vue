@@ -123,10 +123,12 @@ onMounted(loadData)
       <el-table-column label="发布时间" width="160">
         <template #default="{ row }">{{ formatTime(row.create_time) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="150" fixed="right" align="center">
+      <el-table-column label="操作" width="180" fixed="right" align="center">
         <template #default="{ row }">
-          <el-button type="primary" text size="small" @click="handleViewComments(row)">评论详情</el-button>
-          <el-button type="danger" text size="small" @click="handleDeletePost(row)">删除</el-button>
+          <div style="white-space:nowrap">
+            <el-button type="primary" text size="small" @click="handleViewComments(row)">评论详情</el-button>
+            <el-button type="danger" text size="small" @click="handleDeletePost(row)">删除</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>

@@ -231,7 +231,7 @@
   justify-content: flex-end;
 }
 
-.add-cart-btn, .buy-now-btn {
+.buy-now-btn, .chat-btn {
   border-radius: 40rpx;
   font-size: 28rpx;
   padding: 20rpx 30rpx;
@@ -240,12 +240,12 @@
   font-weight: 500;
 }
 
-.add-cart-btn {
-  background-color: #ff9500;
+.buy-now-btn {
+  background-color: #ff6b6b;
   color: #fff;
 }
 
-.buy-now-btn {
-  background-color: #ff6b6b;
+.chat-btn {
+  background-color: #007AFF;
   color: #fff;
 }

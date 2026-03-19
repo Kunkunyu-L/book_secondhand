@@ -16,7 +16,9 @@ router.get("/dashboard", adminHandler.getDashboard);
 router.get("/users", adminHandler.getUsers);
 router.put("/users/status", adminHandler.updateUserStatus);
 router.put("/users/role", adminHandler.updateUserRole);
+router.put("/users", adminHandler.updateUser);
 router.post("/users", adminHandler.addUser);
+router.delete("/users", adminHandler.deleteUser);
 
 // ==================== 用户违规处理 ====================
 router.get("/violations", adminHandler.getViolationList);

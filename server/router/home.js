@@ -6,7 +6,8 @@ const homeHandler = require("../router_handler/home");
 // 系统配置（公开，与后台基础设置同源）
 router.get("/config", homeHandler.getSystemConfig);
 
-//获取一级分类
+//获取一级分类（兼容两种路径）
+router.get("/categories", homeHandler.getLevel1Categories);
 router.get("/categories/level1", homeHandler.getLevel1Categories);
 
 //平台售卖图书信息

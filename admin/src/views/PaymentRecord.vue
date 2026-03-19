@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { getPaymentListApi } from '../api'
+import { formatTime } from '../utils/formatTime'
 import { exportToCSV } from '../utils/export'
 
 const tableData = ref<any[]>([])
@@ -117,7 +118,9 @@ onMounted(loadData)
         <el-table-column prop="transaction_no" label="交易流水号" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">{{ row.transaction_no || '-' }}</template>
         </el-table-column>
-        <el-table-column prop="created_at" label="支付时间" width="170" />
+        <el-table-column label="支付时间" width="170">
+          <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
+        </el-table-column>
       </el-table>
 
       <div class="pagination">

@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getUserBooksApi, updateUserBookStatusApi, getCategoriesApi } from '../api'
 import { exportToCSV } from '../utils/export'
+import { getImageUrl } from '../utils/image'
 
 const tableData = ref<any[]>([])
 const total = ref(0)
@@ -91,7 +92,7 @@ onMounted(() => { loadData(); loadCategories() })
       <el-table-column type="index" label="序号" width="60" align="center" />
       <el-table-column label="封面" width="70" align="center">
         <template #default="{ row }">
-          <el-image v-if="row.cover_img" :src="row.cover_img" style="width:36px;height:46px;border-radius:2px" fit="cover" :preview-src-list="[row.cover_img]" preview-teleported />
+          <el-image v-if="row.cover_img" :src="getImageUrl(row.cover_img)" style="width:36px;height:46px;border-radius:2px" fit="cover" :preview-src-list="[getImageUrl(row.cover_img)]" preview-teleported />
           <span v-else style="color:#c0c4cc">-</span>
         </template>
       </el-table-column>

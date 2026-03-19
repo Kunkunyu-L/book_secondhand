@@ -16,17 +16,17 @@
           <image
             class="avatar"
             :class="{ mine: m.sender_id == userId }"
-            :src="m.sender_id == userId ? (userAvatar || '/static/common.jpg') : (m.sender_avatar || '/static/common.jpg')"
+            :src="m.sender_id == userId ? getImageUrl(userAvatar) : getImageUrl(m.sender_avatar)"
             mode="aspectFill"
           />
           <view class="msg-main">
             <view class="msg-bubble" :class="{ 'bubble-mine': m.sender_id == userId }">
               <image
                 v-if="m.msg_type === 'image'"
-                :src="m.content"
+                :src="getImageUrl(m.content)"
                 mode="widthFix"
                 class="msg-image"
-                @click="previewImg(m.content)"
+                @click="previewImg(getImageUrl(m.content))"
               />
               <text v-else class="msg-text">{{ m.content }}</text>
             </view>
@@ -48,7 +48,7 @@
 <script>
 import request from '../../untils/request.js'
 import io from '../../untils/socket-client.js'
-import { baseURL } from '../../untils/config.js'
+import { baseURL, getImageUrl } from '../../untils/config.js'
 
 export default {
   data() {
@@ -92,7 +92,8 @@ export default {
           data: { session_id: this.sessionId, pageSize: 50 }
         })
         if (res.status === 200) {
-          this.messages = res.data.list || []
+          // 服务端返回 DESC（最新在前），翻转后使最旧在上、最新在下
+          this.messages = (res.data.list || []).reverse()
           this.$nextTick(() => this.scrollToBottom())
         }
       } catch (e) { console.error(e) }

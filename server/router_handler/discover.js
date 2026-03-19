@@ -47,7 +47,7 @@ exports.createPost = (req, res) => {
   const userId = req.auth.id;
   const { content, images } = req.body;
   if (!content || !String(content).trim()) return res.cc("内容不能为空", 400);
-  const sql = "INSERT INTO discover_post (user_id, content, images) VALUES (?, ?, ?)";
+  const sql = "INSERT INTO discover_post (user_id, content, images, create_time) VALUES (?, ?, ?, NOW())";
   const imgStr = Array.isArray(images) ? images.join(",") : (images || "");
   db.query(sql, [userId, String(content).trim(), imgStr], (err, result) => {
     if (err) return res.cc(err);
@@ -71,7 +71,7 @@ exports.toggleLike = (req, res) => {
         res.send({ status: 200, message: "已取消点赞", data: { liked: false } });
       });
     } else {
-      db.query("INSERT INTO discover_post_like (post_id, user_id) VALUES (?, ?)", [postId, userId], (err2) => {
+      db.query("INSERT INTO discover_post_like (post_id, user_id, create_time) VALUES (?, ?, NOW())", [postId, userId], (err2) => {
         if (err2) return res.cc(err2);
         db.query("UPDATE discover_post SET like_count = like_count + 1 WHERE id=?", [postId], () => {});
         res.send({ status: 200, message: "点赞成功", data: { liked: true } });
@@ -115,7 +115,7 @@ exports.createComment = (req, res) => {
   const postId = parseInt(req.params.id, 10);
   const { content, reply_to_id } = req.body;
   if (!postId || !content || !String(content).trim()) return res.cc("参数错误", 400);
-  const sql = "INSERT INTO discover_post_comment (post_id, user_id, reply_to_id, content) VALUES (?, ?, ?, ?)";
+  const sql = "INSERT INTO discover_post_comment (post_id, user_id, reply_to_id, content, create_time) VALUES (?, ?, ?, ?, NOW())";
   const replyId = reply_to_id ? parseInt(reply_to_id, 10) : null;
   db.query(sql, [postId, userId, replyId, String(content).trim()], (err, result) => {
     if (err) return res.cc(err);

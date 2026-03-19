@@ -14,6 +14,7 @@
       </view>
       <view class="form-item">
         <text class="form-label">图片（选填）</text>
+        <text class="form-hint">支持 jpg/png/gif/webp，单张不超过 5MB</text>
         <view class="img-list">
           <image
             v-for="(img, idx) in images"
@@ -41,12 +42,14 @@
 <script>
 import request from '@/untils/request.js';
 import { getImageUrl } from '@/untils/config.js';
+import { uploadImage } from '@/untils/upload.js';
 export default {
   data() {
     return {
       content: '',
-      images: [],
-      submitting: false
+      images: [], // 存储服务器返回的 URL
+      submitting: false,
+      uploading: false
     };
   },
   methods: {
@@ -58,11 +61,20 @@ export default {
         count: remain,
         sizeType: ['compressed'],
         sourceType: ['album', 'camera'],
-        success: (res) => {
+        success: async (res) => {
           const tempFiles = res.tempFilePaths || [];
-          // 这里需要上传到服务器得到 URL；若后端暂不支持上传，可先存 base64 或仅文本发布
-          // 示例：直接使用本地路径仅适合部分端，建议接上传接口
-          this.images = this.images.concat(tempFiles);
+          this.uploading = true;
+          uni.showLoading({ title: '上传中...' });
+          try {
+            for (const path of tempFiles) {
+              const { url } = await uploadImage(path, 'discover');
+              this.images.push(url);
+            }
+          } catch (e) {
+            uni.showToast({ title: e.message || '上传失败', icon: 'none' });
+          }
+          uni.hideLoading();
+          this.uploading = false;
         }
       });
     },
@@ -77,7 +89,6 @@ export default {
       }
       this.submitting = true;
       try {
-        // 若图片未上传，可传空；有上传接口时先上传再传 URLs
         const imagesStr = this.images.length ? this.images.join(',') : '';
         await request({
           url: '/discover/posts',
@@ -121,6 +132,12 @@ export default {
   font-weight: 500;
   display: block;
   margin-bottom: 16rpx;
+}
+.form-hint {
+  font-size: 22rpx;
+  color: #999;
+  display: block;
+  margin-bottom: 12rpx;
 }
 .form-textarea {
   width: 100%;

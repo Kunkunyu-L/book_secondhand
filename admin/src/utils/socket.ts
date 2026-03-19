@@ -14,10 +14,8 @@ export function connectSocket() {
 
   if (socket?.connected) return socket
 
-  // 连接到后端 WebSocket 服务
-  const wsUrl = window.location.hostname === 'localhost'
-    ? 'http://localhost:3000'
-    : window.location.origin
+  const wsUrl = import.meta.env.VITE_API_BASE_URL ||
+    (window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin)
 
   socket = io(wsUrl, {
     auth: { token },

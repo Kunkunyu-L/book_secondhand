@@ -5,7 +5,7 @@
       <view class="form-item avatar-item" @click="chooseAvatar">
         <text class="form-label">头像</text>
         <view class="avatar-wrap">
-          <image :src="form.avatar || '/static/common.jpg'" class="avatar-img" mode="aspectFill"></image>
+          <image :src="getImageUrl(form.avatar)" class="avatar-img" mode="aspectFill"></image>
           <uni-icons type="right" size="16" color="#ccc"></uni-icons>
         </view>
       </view>
@@ -64,6 +64,8 @@
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import request from '@/untils/request.js'
+import { uploadImage } from '@/untils/upload.js'
+import { getImageUrl } from '@/untils/config.js'
 
 const form = ref({ nickname: '', phone: '', avatar: '', username: '', school: '', major: '' })
 const pwd = ref({ oldPassword: '', newPassword: '' })
@@ -88,8 +90,18 @@ const loadProfile = async () => {
 const chooseAvatar = () => {
   uni.chooseImage({
     count: 1,
-    success: (res) => {
-      form.value.avatar = res.tempFilePaths[0]
+    sizeType: ['compressed'],
+    success: async (res) => {
+      const path = res.tempFilePaths[0]
+      uni.showLoading({ title: '上传中...' })
+      try {
+        const { url } = await uploadImage(path, 'avatar')
+        form.value.avatar = url
+        uni.hideLoading()
+      } catch (e) {
+        uni.hideLoading()
+        uni.showToast({ title: e.message || '上传失败', icon: 'none' })
+      }
     }
   })
 }

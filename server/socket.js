@@ -91,9 +91,16 @@ function initSocket(io) {
         // 推送给会话双方
         const targetId = isUserSide ? session.target_id : session.user_id;
         io.to(`user_${targetId}`).emit("new_message", msg);
-        // 如果是平台客服会话, 也推送到客服房间
+        // 如果是平台客服会话, 也推送到客服房间，并写入管理员通知记录
         if (session.target_type === "service") {
           socket.to("service_room").emit("new_message", msg);
+          // 仅用户发消息时写通知，避免管理员回复也写入
+          if (senderRole === "user") {
+            await query(
+              "INSERT INTO notification (user_id, title, content, type) VALUES (0, ?, ?, 'message')",
+              ["新客服消息", "有用户发来客服消息，请及时回复"]
+            ).catch(() => {});
+          }
         }
 
         callback?.({ success: true, message: msg });

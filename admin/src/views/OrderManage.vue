@@ -3,6 +3,8 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getOrdersApi, updateOrderStatusApi, getOrderDetailApi } from '../api'
 import { exportToCSV } from '../utils/export'
+import { formatTime } from '../utils/formatTime'
+import { getImageUrl } from '../utils/image'
 
 const tableData = ref<any[]>([])
 const total = ref(0)
@@ -127,7 +129,9 @@ onMounted(loadData)
           <el-tag :type="(statusMap[row.status]?.type || '') as any" size="small">{{ statusMap[row.status]?.text || row.status }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="created_at" label="下单时间" width="160" />
+      <el-table-column label="下单时间" width="160">
+        <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
+      </el-table-column>
       <el-table-column label="操作" width="210" fixed="right" align="center">
         <template #default="{ row }">
           <el-button type="primary" text size="small" @click="viewDetail(row)">详情</el-button>
@@ -163,7 +167,7 @@ onMounted(loadData)
         <h4 style="margin:16px 0 8px;color:#303133">商品明细</h4>
         <el-table :data="orderDetail.items" border size="small">
           <el-table-column label="封面" width="50" align="center">
-            <template #default="{ row }"><el-image v-if="row.cover_img" :src="row.cover_img" style="width:28px;height:36px" fit="cover" /></template>
+            <template #default="{ row }"><el-image v-if="row.cover_img" :src="getImageUrl(row.cover_img)" style="width:28px;height:36px" fit="cover" /></template>
           </el-table-column>
           <el-table-column prop="title" label="商品" min-width="150" show-overflow-tooltip />
           <el-table-column label="类型" width="70" align="center">

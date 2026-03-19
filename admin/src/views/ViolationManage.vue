@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getViolationListApi, addViolationApi, getUsersApi } from '../api'
+import { formatTime } from '../utils/formatTime'
 
 const tableData = ref<any[]>([])
 const total = ref(0)
@@ -100,7 +101,9 @@ onMounted(loadData)
         </template>
       </el-table-column>
       <el-table-column prop="admin_name" label="操作人" width="100" />
-      <el-table-column prop="created_at" label="处理时间" width="170" />
+      <el-table-column label="处理时间" width="170">
+        <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
+      </el-table-column>
     </el-table>
 
     <div class="pagination">

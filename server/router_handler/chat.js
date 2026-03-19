@@ -67,7 +67,7 @@ exports.getMessages = async (req, res) => {
 
     res.send({
       status: 200, message: "获取消息成功",
-      data: { list: messages.reverse(), total: countResult[0].total },
+      data: { list: messages, total: countResult[0].total },
     });
   } catch (err) {
     res.cc(err);
@@ -160,6 +160,21 @@ exports.createSession = async (req, res) => {
       user_id: userId, target_id: tid, target_type, status: "active",
     });
     res.send({ status: 200, message: "创建成功", data: { id: result.insertId, user_id: userId, target_id: tid, target_type } });
+  } catch (err) {
+    res.cc(err);
+  }
+};
+
+// 删除会话（用户从列表隐藏，不删除消息记录）
+exports.deleteSession = async (req, res) => {
+  try {
+    const userId = req.auth.id;
+    const { session_id } = req.body;
+    if (!session_id) return res.cc("缺少参数", 400);
+    const rows = await query("SELECT id FROM chat_session WHERE id=? AND user_id=?", [session_id, userId]);
+    if (rows.length === 0) return res.cc("会话不存在或无权限", 403);
+    await query("DELETE FROM chat_session WHERE id=? AND user_id=?", [session_id, userId]);
+    res.send({ status: 200, message: "删除成功" });
   } catch (err) {
     res.cc(err);
   }

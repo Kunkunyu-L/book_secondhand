@@ -89,7 +89,7 @@ exports.getUsers = async (req, res) => {
 
     const countResult = await query(`SELECT COUNT(*) as total FROM user ${where}`, params);
     const users = await query(
-      `SELECT id, username, phone, role, avatar, nickname, credit_score, status, account, created_at, updated_at
+      `SELECT id, username, phone, role, avatar, nickname, credit_score, status, account, school, major, created_at, updated_at
        FROM user ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
       [...params, pageSize, offset]
     );
@@ -165,6 +165,41 @@ exports.addUser = async (req, res) => {
   } catch (err) {
     res.cc(err);
   }
+};
+
+exports.updateUser = async (req, res) => {
+  try {
+    const { id, nickname, phone, school, major, avatar, account } = req.body;
+    if (!id) return res.cc("参数不完整", 400);
+    const fields = [];
+    const params = [];
+    if (nickname !== undefined) { fields.push("nickname=?"); params.push(nickname); }
+    if (phone !== undefined) { fields.push("phone=?"); params.push(phone); }
+    if (school !== undefined) { fields.push("school=?"); params.push(school); }
+    if (major !== undefined) { fields.push("major=?"); params.push(major); }
+    if (avatar !== undefined) { fields.push("avatar=?"); params.push(avatar); }
+    if (account !== undefined) {
+      const n = Number(account);
+      if (Number.isNaN(n) || !Number.isFinite(n)) return res.cc("余额格式不正确", 400);
+      fields.push("account=?");
+      params.push(Math.trunc(n));
+    }
+    if (fields.length === 0) return res.cc("无可更新字段", 400);
+    params.push(id);
+    await query(`UPDATE user SET ${fields.join(", ")} WHERE id=?`, params);
+    res.send({ status: 200, message: "更新成功" });
+  } catch (err) { res.cc(err); }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (!id) return res.cc("参数不完整", 400);
+    const self = await query("SELECT id FROM user WHERE id=? AND role='superAdmin'", [id]);
+    if (self.length > 0) return res.cc("不能删除超级管理员", 403);
+    await query("DELETE FROM user WHERE id=?", [id]);
+    res.send({ status: 200, message: "删除成功" });
+  } catch (err) { res.cc(err); }
 };
 
 // ===================== 用户违规处理 =====================
@@ -584,23 +619,29 @@ exports.getOrders = async (req, res) => {
       `SELECT COUNT(*) as total FROM orders o LEFT JOIN user u ON o.user_id = u.id ${where}`, params
     );
     const orders = await query(
-      `SELECT o.*, u.username, u.nickname,
-        (SELECT JSON_ARRAYAGG(
-          JSON_OBJECT('title', oi.title, 'cover_img', oi.cover_img, 'price', oi.price,
-            'quantity', oi.quantity, 'book_id', oi.book_id, 'book_type', oi.book_type)
-        ) FROM order_items oi WHERE oi.order_id = o.id) AS items
+      `SELECT o.*, u.username, u.nickname
       FROM orders o LEFT JOIN user u ON o.user_id = u.id
       ${where}
       ORDER BY o.created_at DESC LIMIT ? OFFSET ?`,
       [...params, pageSize, offset]
     );
 
-    orders.forEach((r) => {
-      if (typeof r.items === "string") {
-        try { r.items = JSON.parse(r.items); } catch (e) { r.items = []; }
-      }
-      if (!r.items) r.items = [];
-    });
+    if (orders.length > 0) {
+      const orderIds = orders.map((o) => o.id);
+      const placeholders = orderIds.map(() => "?").join(",");
+      const items = await query(
+        `SELECT order_id, title, cover_img, price, quantity, book_id, book_type FROM order_items WHERE order_id IN (${placeholders})`,
+        orderIds
+      );
+      const itemMap = {};
+      items.forEach((item) => {
+        if (!itemMap[item.order_id]) itemMap[item.order_id] = [];
+        itemMap[item.order_id].push(item);
+      });
+      orders.forEach((o) => { o.items = itemMap[o.id] || []; });
+    } else {
+      orders.forEach((o) => { o.items = []; });
+    }
 
     res.send({
       status: 200, message: "获取订单列表成功",
@@ -635,12 +676,16 @@ exports.updateAdminOrderStatus = async (req, res) => {
       }
     }
     if (newStatus === "completed") {
-      const items = await query("SELECT book_id, book_type, quantity FROM order_items WHERE order_id=?", [order_id]);
+      const items = await query("SELECT book_id, book_type, seller_id, price, quantity FROM order_items WHERE order_id=?", [order_id]);
       for (const item of items) {
         if (item.book_type === "platform") {
           await query("UPDATE platform_book SET sales_count=sales_count+? WHERE id=?", [item.quantity, item.book_id]);
         } else {
           await query("UPDATE user_book SET nope=nope+? WHERE id=?", [item.quantity, item.book_id]);
+          if (item.seller_id) {
+            const earnings = parseFloat((item.price * item.quantity).toFixed(2));
+            await query("UPDATE user SET account = COALESCE(account, 0) + ? WHERE id=?", [earnings, item.seller_id]);
+          }
         }
       }
     }
@@ -781,15 +826,18 @@ exports.getOrderStats = async (req, res) => {
       dateParams
     );
 
-    // 地区维度统计
-    const regionStats = await query(
-      `SELECT COALESCE(JSON_UNQUOTE(JSON_EXTRACT(address_snapshot, '$.province')), '未知') as province,
-        COUNT(*) as order_count, SUM(total_amount) as total_amount
-      FROM orders o
-      WHERE address_snapshot IS NOT NULL ${dateWhere}
-      GROUP BY province ORDER BY order_count DESC LIMIT 20`,
-      dateParams
-    );
+    // 地区维度统计（跳过无效 JSON 行，避免 JSON_EXTRACT 报错）
+    let regionStats = [];
+    try {
+      regionStats = await query(
+        `SELECT COALESCE(JSON_UNQUOTE(JSON_EXTRACT(address_snapshot, '$.province')), '未知') as province,
+          COUNT(*) as order_count, SUM(total_amount) as total_amount
+        FROM orders o
+        WHERE address_snapshot IS NOT NULL AND JSON_VALID(address_snapshot) = 1 ${dateWhere}
+        GROUP BY province ORDER BY order_count DESC LIMIT 20`,
+        dateParams
+      );
+    } catch (e) { regionStats = []; }
 
     // 总览
     const summary = await query(

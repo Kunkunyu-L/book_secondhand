@@ -1,7 +1,10 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
-const http = axios.create({ timeout: 15000 })
+const http = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',
+  timeout: 15000,
+})
 
 http.interceptors.request.use((config) => {
   const token = localStorage.getItem('admin_token')
@@ -10,7 +13,17 @@ http.interceptors.request.use((config) => {
 })
 
 http.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    const data = response.data
+    // 后端有些场景使用 res.cc 返回业务 status，但 HTTP 仍为 200
+    if (data && data.status === 401) {
+      localStorage.removeItem('admin_token')
+      localStorage.removeItem('admin_username')
+      window.location.href = '/login'
+      return Promise.reject(data)
+    }
+    return data
+  },
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('admin_token')
@@ -26,6 +39,9 @@ http.interceptors.response.use(
 export const getCaptchaApi = () => http.get('/api/captcha')
 export const loginApi = (data: any) => http.post('/api/login', data)
 
+// ==================== 图片上传 ====================
+// 使用 admin/src/utils/upload.ts 的 uploadImage，因需 FormData
+
 // ==================== 仪表盘 ====================
 export const getDashboardApi = () => http.get('/admin/dashboard')
 
@@ -33,7 +49,9 @@ export const getDashboardApi = () => http.get('/admin/dashboard')
 export const getUsersApi = (params: any) => http.get('/admin/users', { params })
 export const updateUserStatusApi = (data: any) => http.put('/admin/users/status', data)
 export const updateUserRoleApi = (data: any) => http.put('/admin/users/role', data)
+export const updateUserApi = (data: any) => http.put('/admin/users', data)
 export const addUserApi = (data: any) => http.post('/admin/users', data)
+export const deleteUserApi = (data: any) => http.delete('/admin/users', { data })
 
 // ==================== 用户违规 ====================
 export const getViolationListApi = (params: any) => http.get('/admin/violations', { params })
@@ -91,7 +109,7 @@ export const getDiscoverCommentsApi = (params: any) => http.get('/admin/discover
 export const deleteDiscoverCommentApi = (data: any) => http.delete('/admin/discover/comments', { data })
 
 // ==================== 公告管理 ====================
-export const getAnnouncementsApi = () => http.get('/admin/announcements')
+export const getAnnouncementsApi = (params?: any) => http.get('/admin/announcements', { params })
 export const addAnnouncementApi = (data: any) => http.post('/admin/announcements', data)
 export const updateAnnouncementApi = (data: any) => http.put('/admin/announcements', data)
 export const deleteAnnouncementApi = (data: any) => http.delete('/admin/announcements', { data })
@@ -107,6 +125,10 @@ export const getChatSessionsApi = (params: any) => http.get('/admin/chat/session
 export const assignSessionApi = (data: any) => http.put('/admin/chat/sessions/assign', data)
 export const closeSessionApi = (data: any) => http.put('/admin/chat/sessions/close', data)
 export const getChatMessagesApi = (params: any) => http.get('/chat/messages', { params })
+
+// ==================== 客服人员管理 ====================
+export const getServiceStaffApi = () => http.get('/admin/service-staff')
+export const updateServiceStaffApi = (data: any) => http.put('/admin/service-staff', data)
 
 // ==================== 工单管理 ====================
 export const getTicketsApi = (params: any) => http.get('/admin/tickets', { params })

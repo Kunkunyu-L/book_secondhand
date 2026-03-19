@@ -23,9 +23,9 @@ exports.getFavoriteList = (req, res) => {
       END AS book_status,
       bcp.price, bcp.original_price
     FROM favorite f
-    LEFT JOIN platform_book pb ON f.book_id = pb.id AND f.book_type COLLATE utf8mb4_unicode_ci = 'platform'
-    LEFT JOIN user_book ub ON f.book_id = ub.id AND f.book_type COLLATE utf8mb4_unicode_ci = 'user'
-    LEFT JOIN book_condition_price bcp ON f.book_id = bcp.book_id AND f.book_type COLLATE utf8mb4_unicode_ci = bcp.type COLLATE utf8mb4_unicode_ci
+    LEFT JOIN platform_book pb ON f.book_id = pb.id AND f.book_type = 'platform'
+    LEFT JOIN user_book ub ON f.book_id = ub.id AND f.book_type = 'user'
+    LEFT JOIN book_condition_price bcp ON f.book_id = bcp.book_id AND f.book_type = bcp.type
     WHERE f.user_id = ?
     ORDER BY f.created_at DESC
   `;
@@ -53,7 +53,7 @@ exports.removeFavorite = (req, res) => {
   const userId = req.auth.id;
   const { book_id, book_type } = req.body;
   if (!book_id || !book_type) return res.cc("参数不完整", 400);
-  db.query("DELETE FROM favorite WHERE user_id=? AND book_id=? AND book_type COLLATE utf8mb4_unicode_ci = ?", [userId, book_id, book_type], (err) => {
+  db.query("DELETE FROM favorite WHERE user_id=? AND book_id=? AND book_type = ?", [userId, book_id, book_type], (err) => {
     if (err) return res.cc(err);
     res.send({ status: 200, message: "取消收藏成功" });
   });
@@ -64,7 +64,7 @@ exports.checkFavorite = (req, res) => {
   const userId = req.auth.id;
   const { book_id, book_type } = req.query;
   if (!book_id || !book_type) return res.cc("参数不完整", 400);
-  db.query("SELECT id FROM favorite WHERE user_id=? AND book_id=? AND book_type COLLATE utf8mb4_unicode_ci = ?", [userId, book_id, book_type], (err, results) => {
+  db.query("SELECT id FROM favorite WHERE user_id=? AND book_id=? AND book_type = ?", [userId, book_id, book_type], (err, results) => {
     if (err) return res.cc(err);
     res.send({ status: 200, message: "查询成功", data: { isFavorited: results.length > 0 } });
   });

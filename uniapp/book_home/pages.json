@@ -157,6 +157,30 @@
 	    "style": { 
 		 "navigationBarTitleText": "申请退款"
 		}
+	},
+	{
+	    "path": "pages/faq/faq",
+	    "style": { 
+		 "navigationBarTitleText": "常见问题"
+		}
+	},
+	{
+	    "path": "pages/notifications/notices",
+	    "style": { 
+		 "navigationBarTitleText": "通知公告"
+		}
+	},
+	{
+	    "path": "pages/notifications/system-messages",
+	    "style": { 
+		 "navigationBarTitleText": "系统通知"
+		}
+	},
+	{
+	    "path": "pages/mine/withdraw",
+	    "style": { 
+		 "navigationBarTitleText": "余额与提现"
+		}
 	}
   ],
   "tabBar": {

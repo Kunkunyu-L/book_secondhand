@@ -26,14 +26,12 @@ export const useAuthStore = defineStore('auth', () => {
     password: string
     captchaToken?: string
     captchaValue?: string
-    identity?: 'admin' | 'service'
   }) => {
     const res: any = await loginApi(credentials)
     if (res.status === 200 && res.token) {
       const payload = decodeToken(res.token)
       if (!payload) throw new Error('登录信息无效')
-      const allowed = ADMIN_ROLES.includes(payload.role) || payload.is_service === 1
-      if (!allowed) throw new Error('该账号无后台权限')
+      if (!ADMIN_ROLES.includes(payload.role)) throw new Error('该账号无后台权限')
       token.value = res.token
       username.value = payload.username
       role.value = payload.role || ''

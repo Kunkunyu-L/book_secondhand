@@ -2,6 +2,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getTicketsApi, updateTicketApi } from '../api'
+import { formatTime } from '../utils/formatTime'
 
 const tableData = ref<any[]>([])
 const total = ref(0)
@@ -76,7 +77,9 @@ onMounted(loadData)
         <template #default="{ row }"><el-tag :type="(statusMap[row.status]?.type || '') as any" size="small">{{ statusMap[row.status]?.text }}</el-tag></template>
       </el-table-column>
       <el-table-column label="分配给" width="90"><template #default="{ row }">{{ row.assigned_name || '-' }}</template></el-table-column>
-      <el-table-column prop="created_at" label="创建时间" width="160" />
+      <el-table-column label="创建时间" width="160">
+        <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
+      </el-table-column>
       <el-table-column label="操作" width="80" fixed="right" align="center">
         <template #default="{ row }"><el-button type="primary" text size="small" @click="openReply(row)">处理</el-button></template>
       </el-table-column>

@@ -16,19 +16,14 @@ function requestInterceptor(config) {
   return config;
 }
 
-// 登录失效处理：清除 token 并跳转登录
+// 登录失效处理：清除 token 并回到首页（不强制跳登录）
 function handleLoginExpired() {
   uni.removeStorageSync('token');
   uni.removeStorageSync('userInfo');
-  uni.showToast({ title: '登录已失效，请重新登录', icon: 'none', duration: 2000 });
+  uni.showToast({ title: '登录已失效', icon: 'none', duration: 1500 });
   setTimeout(() => {
-    const pages = getCurrentPages();
-    const cur = pages[pages.length - 1];
-    const route = cur ? (cur.route || '') : '';
-    if (route && route.indexOf('auth/login') === -1 && route.indexOf('auth/register') === -1) {
-      uni.reLaunch({ url: '/pages/auth/login' });
-    }
-  }, 1500);
+    uni.reLaunch({ url: '/pages/index/index' });
+  }, 800);
 }
 
 // 响应拦截器（收到响应后执行）

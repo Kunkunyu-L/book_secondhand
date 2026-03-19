@@ -2,8 +2,24 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getConfigsApi, saveConfigsApi } from '../api'
+import { uploadImage } from '../utils/upload'
+import { getImageUrl } from '../utils/image'
 
 const loading = ref(false)
+const logoUploading = ref(false)
+
+const handleLogoUpload = async (options: { file: File }) => {
+  logoUploading.value = true
+  try {
+    const { url } = await uploadImage(options.file, 'logo')
+    configs.site_logo = url
+    ElMessage.success('LOGO 上传成功')
+  } catch (e: any) {
+    ElMessage.error(e.message || '上传失败')
+  } finally {
+    logoUploading.value = false
+  }
+}
 const activeTab = ref('basic')
 const configs = reactive({
   site_name: '',
@@ -77,13 +93,18 @@ onMounted(loadData)
             <el-input v-model="configs.app_slogan" placeholder="如：让知识流动起来" />
           </el-form-item>
           <el-form-item label="平台 LOGO">
-            <el-input v-model="configs.site_logo" placeholder="LOGO 图片 URL" />
-            <el-image
-              v-if="configs.site_logo"
-              :src="configs.site_logo"
-              style="width:100px;margin-top:8px;border-radius:6px"
-              fit="contain"
-            />
+            <el-upload
+              :show-file-list="false"
+              :http-request="handleLogoUpload"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+            >
+              <template #tip><span class="el-upload__tip">支持 jpg/png/gif/webp，单张不超过 5MB</span></template>
+              <div v-if="configs.site_logo" class="upload-preview">
+                <el-image :src="getImageUrl(configs.site_logo)" style="width:100px;height:100px;border-radius:6px" fit="contain" />
+                <span class="upload-tip">点击更换</span>
+              </div>
+              <el-button v-else type="primary" :loading="logoUploading">上传 LOGO</el-button>
+            </el-upload>
           </el-form-item>
           <el-form-item label="平台简介">
             <el-input
@@ -149,4 +170,6 @@ onMounted(loadData)
 
 <style scoped>
 .field-hint { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+.upload-preview { cursor: pointer; }
+.upload-tip { font-size: 12px; color: #909399; display: block; margin-top: 4px; }
 </style>

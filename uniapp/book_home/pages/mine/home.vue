@@ -9,6 +9,7 @@
         <view class="user-name">{{ userInfo.nickname || userInfo.username || '未登录' }}</view>
         <view class="user-id" v-if="token">ID: {{ userInfo.id || '---' }}</view>
         <view class="user-id" v-if="token && userInfo.credit_score">信用分: {{ userInfo.credit_score }}</view>
+        <view class="user-balance" v-if="token">余额: ¥{{ Number(userInfo.account || 0).toFixed(2) }}</view>
         <view class="user-id" v-if="!token">点击登录</view>
       </view>
       <view class="edit-btn" @click.stop="goToEdit" v-show="token">
@@ -82,7 +83,21 @@
         </view>
       </view>
 
-      <!-- 客服 -->
+      <!-- 余额与提现 -->
+      <view class="menu-group">
+        <view class="menu-item" @click="goToWithdraw">
+          <view class="menu-icon">
+            <uni-icons type="cash" size="22" color="#52C41A"></uni-icons>
+          </view>
+          <view class="menu-text">余额与提现</view>
+          <view style="display:flex;align-items:center;gap:8rpx;">
+            <text v-if="token" style="font-size:26rpx;color:#52C41A;font-weight:bold;">¥{{ Number(userInfo.account || 0).toFixed(2) }}</text>
+            <uni-icons type="right" size="16" color="#ccc"></uni-icons>
+          </view>
+        </view>
+      </view>
+
+      <!-- 客服与帮助 -->
       <view class="menu-group">
         <view class="menu-item" @click="goToService">
           <view class="menu-icon">
@@ -96,6 +111,13 @@
             <uni-icons type="compose" size="22" color="#409EFF"></uni-icons>
           </view>
           <view class="menu-text">提交工单</view>
+          <uni-icons type="right" size="16" color="#ccc"></uni-icons>
+        </view>
+        <view class="menu-item" @click="goTo('/pages/faq/faq')">
+          <view class="menu-icon">
+            <uni-icons type="help" size="22" color="#67C23A"></uni-icons>
+          </view>
+          <view class="menu-text">常见问题</view>
           <uni-icons type="right" size="16" color="#ccc"></uni-icons>
         </view>
       </view>
@@ -226,6 +248,11 @@ const goToSetting = () => {
   uni.navigateTo({ url: '/pages/setting/setting' })
 }
 
+const goToWithdraw = () => {
+  if (!checkLogin()) return
+  uni.navigateTo({ url: '/pages/mine/withdraw' })
+}
+
 const showLogoutModal = () => {
   uni.showModal({
     title: '提示',
@@ -287,6 +314,11 @@ const showLogoutModal = () => {
 .user-id {
   font-size: 24rpx;
   color: #999;
+}
+.user-balance {
+  font-size: 24rpx;
+  color: #52C41A;
+  font-weight: 500;
 }
 .edit-btn {
   display: flex;

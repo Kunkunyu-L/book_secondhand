@@ -71,10 +71,12 @@ onMounted(() => { loadFaqs() })
           <el-table-column label="状态" width="70" align="center">
             <template #default="{ row }"><el-tag :type="row.status ? 'success' : 'info'" size="small">{{ row.status ? '启用' : '禁用' }}</el-tag></template>
           </el-table-column>
-          <el-table-column label="操作" width="120" fixed="right" align="center">
+          <el-table-column label="操作" width="140" fixed="right" align="center">
             <template #default="{ row }">
-              <el-button type="primary" text size="small" @click="openEditFaq(row)">编辑</el-button>
-              <el-button type="danger" text size="small" @click="delFaq(row)">删除</el-button>
+              <div style="white-space:nowrap">
+                <el-button type="primary" text size="small" @click="openEditFaq(row)">编辑</el-button>
+                <el-button type="danger" text size="small" @click="delFaq(row)">删除</el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>

@@ -41,10 +41,10 @@ const defaultOpeneds = computed(() => {
 
 const loadNotifications = async () => {
   try {
-    const res: any = await getNotificationsApi({ unread: '1' })
+    const res: any = await getNotificationsApi()
     if (res.status === 200) {
       unreadCount.value = res.data.unreadCount || 0
-      notifications.value = res.data.list?.slice(0, 10) || []
+      notifications.value = res.data.list?.slice(0, 20) || []
     }
   } catch { /* ignore */ }
 }
@@ -101,16 +101,30 @@ function setupRealtimeNotify() {
   })
 
   socket.off('new_message').on('new_message', (payload: any) => {
-    const fromUser = payload?.sender_role === 'user' ? '用户' : '客服'
+    if (payload?.sender_role === 'user') {
+      ElNotification({
+        title: '新客服消息',
+        message: '有用户发来客服消息，请及时回复',
+        type: 'info',
+        position: 'top-right',
+        duration: 5000,
+        onClick: () => router.push('/chat-sessions'),
+      })
+      playChatNotifySound()
+      loadNotifications()
+    }
+  })
+
+  socket.off('new_ticket').on('new_ticket', (payload: any) => {
     ElNotification({
-      title: '新客服消息',
-      message: `${fromUser}发来新消息，请及时处理`,
-      type: 'info',
+      title: payload?.title || '新咨询工单',
+      message: payload?.content || '有用户提交了新工单，请及时处理',
+      type: 'warning',
       position: 'top-right',
-      duration: 5000,
-      onClick: () => router.push('/chat-sessions'),
+      duration: 6000,
+      onClick: () => router.push('/tickets'),
     })
-    playChatNotifySound()
+    playOrderNotifySound()
     loadNotifications()
   })
 }

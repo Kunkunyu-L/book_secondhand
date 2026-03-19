@@ -247,7 +247,7 @@ watch(visible, (v) => { if (v) loadSessions() })
   font-size: 13px;
   word-break: break-all;
 }
-.bubble-mine { background: #e5e7eb; color: #1f2937; }
+.bubble-mine { background: #dbeafe; color: #1e40af; }
 .msg-sender { font-size: 11px; color: #6b7280; margin-bottom: 2px; }
 .msg-time { font-size: 10px; color: #9ca3af; margin-top: 2px; text-align: right; }
 

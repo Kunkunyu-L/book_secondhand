@@ -3,8 +3,11 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getPlatformBooksApi, addPlatformBookApi, updatePlatformBookApi, deletePlatformBookApi, getCategoriesApi } from '../api'
 import { exportToCSV } from '../utils/export'
+import { uploadImage } from '../utils/upload'
+import { getImageUrl } from '../utils/image'
 
 const tableData = ref<any[]>([])
+const coverUploading = ref(false)
 const total = ref(0)
 const page = ref(1)
 const pageSize = ref(10)
@@ -76,6 +79,19 @@ const handleDelete = async (row: any) => {
 
 const handleSearch = () => { page.value = 1; loadData() }
 
+const handleCoverUpload = async (options: { file: File }) => {
+  coverUploading.value = true
+  try {
+    const { url } = await uploadImage(options.file, 'platform')
+    form.cover_img = url
+    ElMessage.success('封面上传成功')
+  } catch (e: any) {
+    ElMessage.error(e.message || '上传失败')
+  } finally {
+    coverUploading.value = false
+  }
+}
+
 const handleExport = () => {
   exportToCSV(tableData.value, [
     { key: 'id', title: 'ID' }, { key: 'isbn', title: 'ISBN' }, { key: 'title', title: '书名' },
@@ -114,7 +130,7 @@ onMounted(() => { loadData(); loadCategories() })
       <el-table-column type="index" label="序号" width="60" align="center" />
       <el-table-column label="封面" width="70" align="center">
         <template #default="{ row }">
-          <el-image v-if="row.cover_img" :src="row.cover_img" style="width:36px;height:46px;border-radius:2px" fit="cover" :preview-src-list="[row.cover_img]" preview-teleported />
+          <el-image v-if="row.cover_img" :src="getImageUrl(row.cover_img)" style="width:36px;height:46px;border-radius:2px" fit="cover" :preview-src-list="[getImageUrl(row.cover_img)]" preview-teleported />
           <span v-else style="color:#c0c4cc">-</span>
         </template>
       </el-table-column>
@@ -177,7 +193,20 @@ onMounted(() => { loadData(); loadCategories() })
           </el-col>
         </el-row>
         <el-divider content-position="left">图片与描述</el-divider>
-        <el-form-item label="封面图"><el-input v-model="form.cover_img" placeholder="封面图 URL" /></el-form-item>
+        <el-form-item label="封面图">
+          <el-upload
+            :show-file-list="false"
+            :http-request="handleCoverUpload"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+          >
+            <template #tip><span class="el-upload__tip">支持 jpg/png/gif/webp，单张不超过 5MB</span></template>
+            <div v-if="form.cover_img" class="upload-preview">
+              <el-image :src="getImageUrl(form.cover_img)" style="width:80px;height:100px;border-radius:4px" fit="cover" />
+              <span class="upload-tip">点击更换</span>
+            </div>
+            <el-button v-else type="primary" :loading="coverUploading">上传封面</el-button>
+          </el-upload>
+        </el-form-item>
         <el-form-item label="详情图"><el-input v-model="form.detail_imgs" type="textarea" :rows="2" placeholder="多张URL逗号分隔" /></el-form-item>
         <el-form-item label="描述"><el-input v-model="form.description" type="textarea" :rows="3" /></el-form-item>
         <el-divider content-position="left">价格与库存</el-divider>
@@ -199,4 +228,6 @@ onMounted(() => { loadData(); loadCategories() })
 
 <style scoped>
 .pagination { display: flex; justify-content: flex-end; margin-top: 16px; }
+.upload-preview { cursor: pointer; }
+.upload-tip { font-size: 12px; color: #909399; display: block; margin-top: 4px; }
 </style>

@@ -51,6 +51,15 @@ const regRegisterSchema = Joi.object({
       "string.pattern.base": "手机号格式不正确，请输入 11 位中国大陆手机号",
       "any.required": "手机号是必填项",
     }),
+
+  captchaToken: Joi.string().required().messages({
+    "string.empty": "验证码 token 不能为空",
+    "any.required": "验证码 token 是必填项",
+  }),
+  captchaValue: Joi.string().required().messages({
+    "string.empty": "验证码不能为空",
+    "any.required": "验证码是必填项",
+  }),
 });
 
 module.exports = { regLoginSchema, regRegisterSchema };

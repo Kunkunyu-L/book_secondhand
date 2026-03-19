@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getDashboardApi } from '../api'
+import { getDashboardApi, getAnnouncementsApi } from '../api'
+import { formatTime } from '../utils/formatTime'
 
 const stats = ref({
   userCount: 0,
@@ -14,6 +15,7 @@ const stats = ref({
 })
 const recentOrders = ref<any[]>([])
 const loading = ref(false)
+const sysAnnouncements = ref<any[]>([])
 
 const statusMap: Record<string, { text: string; type: string }> = {
   pending: { text: '待付款', type: 'warning' },
@@ -26,10 +28,16 @@ const statusMap: Record<string, { text: string; type: string }> = {
 const loadData = async () => {
   loading.value = true
   try {
-    const res: any = await getDashboardApi()
-    if (res.status === 200) {
-      stats.value = res.data
-      recentOrders.value = res.data.recentOrders || []
+    const [dashRes, annoRes]: any[] = await Promise.all([
+      getDashboardApi(),
+      getAnnouncementsApi({ type: 'system_notice', status: 1 }).catch(() => ({ status: 0 })),
+    ])
+    if (dashRes.status === 200) {
+      stats.value = dashRes.data
+      recentOrders.value = dashRes.data.recentOrders || []
+    }
+    if (annoRes.status === 200) {
+      sysAnnouncements.value = annoRes.data || []
     }
   } finally {
     loading.value = false
@@ -84,6 +92,25 @@ onMounted(loadData)
           <div class="stat-info">
             <div class="stat-value">{{ Number(stats.revenue).toFixed(2) }}</div>
             <div class="stat-label">总收入 (元)</div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 系统公告区域 -->
+    <el-row v-if="sysAnnouncements.length > 0" :gutter="20" style="margin-top: 20px">
+      <el-col :span="24">
+        <el-card shadow="never">
+          <template #header>
+            <div class="card-header">
+              <el-icon style="margin-right:6px;color:#e6a23c"><Bell /></el-icon>
+              <span>系统公告</span>
+            </div>
+          </template>
+          <div v-for="a in sysAnnouncements" :key="a.id" class="announcement-item">
+            <div class="ann-title">{{ a.title }}</div>
+            <div class="ann-content">{{ a.content }}</div>
+            <div class="ann-time">{{ formatTime(a.created_at) }}</div>
           </div>
         </el-card>
       </el-col>
@@ -218,4 +245,13 @@ onMounted(loadData)
   color: #6b7280;
   margin-top: 6px;
 }
+
+.announcement-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.announcement-item:last-child { border-bottom: none; }
+.ann-title { font-size: 14px; font-weight: 500; color: #1f2937; }
+.ann-content { font-size: 13px; color: #6b7280; margin-top: 4px; }
+.ann-time { font-size: 11px; color: #9ca3af; margin-top: 4px; }
 </style>

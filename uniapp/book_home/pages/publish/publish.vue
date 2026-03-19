@@ -68,6 +68,7 @@
       <view class="card-title">图片与描述</view>
       <view class="form-item-col">
         <text class="form-label">封面图片</text>
+        <text class="form-hint">支持 jpg/png/gif/webp，单张不超过 5MB</text>
         <view class="img-list">
           <image v-if="form.cover_img" :src="getImageUrl(form.cover_img)" class="preview-img" mode="aspectFill" @click="chooseCover"></image>
           <view v-else class="add-img" @click="chooseCover">
@@ -93,6 +94,7 @@ import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import request from '@/untils/request.js'
 import { getImageUrl } from '@/untils/config.js'
+import { uploadImage } from '@/untils/upload.js'
 
 const categories = ref([])
 const publishing = ref(false)
@@ -164,8 +166,18 @@ const onCategoryChange = (e) => {
 const chooseCover = () => {
   uni.chooseImage({
     count: 1,
-    success: (res) => {
-      form.value.cover_img = res.tempFilePaths[0]
+    sizeType: ['compressed'],
+    success: async (res) => {
+      const path = res.tempFilePaths[0]
+      uni.showLoading({ title: '上传中...' })
+      try {
+        const { url } = await uploadImage(path, 'book')
+        form.value.cover_img = url
+        uni.hideLoading()
+      } catch (e) {
+        uni.hideLoading()
+        uni.showToast({ title: e.message || '上传失败', icon: 'none' })
+      }
     }
   })
 }
@@ -206,6 +218,7 @@ const submitPublish = async () => {
 .form-item-col { padding: 20rpx 0; border-bottom: 1rpx solid #f5f5f5; }
 .form-label { font-size: 28rpx; color: #333; width: 160rpx; flex-shrink: 0; }
 .form-label.required::before { content: '*'; color: #ff4d4f; margin-right: 4rpx; }
+.form-hint { font-size: 22rpx; color: #999; display: block; margin-top: 8rpx; }
 .form-input { flex: 1; font-size: 28rpx; text-align: right; }
 .form-textarea { width: 100%; height: 200rpx; font-size: 26rpx; margin-top: 16rpx; padding: 16rpx; background: #f8f8f8; border-radius: 12rpx; }
 .picker-text { font-size: 28rpx; color: #007AFF; }

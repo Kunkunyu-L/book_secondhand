@@ -19,7 +19,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const cors = require("cors");
+const path = require("path");
 app.use(cors());
+
+// 静态托管上传文件（公开访问，需在 jwtAuth 之前）
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
@@ -74,6 +78,9 @@ app.use("/client", clientRouter);
 //发现（帖子：列表/评论公开，发帖/点赞/评论需认证）
 const discoverRouter = require("./router/discover");
 app.use("/discover", discoverRouter);
+// 图片上传（需认证）
+const uploadRouter = require("./router/upload");
+app.use("/upload", uploadRouter);
 //管理后台路由（需认证+管理员权限）
 const adminRouter = require("./router/admin");
 app.use("/admin", adminRouter);

@@ -61,21 +61,26 @@ router.beforeEach(async (to, _from, next) => {
     let role = authStore.role || localStorage.getItem('admin_role') || ''
     if (!role && token) {
       try {
-        const payload = JSON.parse(atob(token.replace('Bearer ', '').split('.')[1]))
-        role = payload.role || ''
-        authStore.role = role
-        localStorage.setItem('admin_role', role)
+        const tokenPart = token.replace('Bearer ', '').split('.')[1]
+        if (tokenPart) {
+          const payload = JSON.parse(atob(tokenPart))
+          role = payload.role || ''
+          authStore.role = role
+          localStorage.setItem('admin_role', role)
+        }
       } catch { /* ignore */ }
     }
-    if (!permissionStore.rolePagePermission.superAdmin?.length) {
-      try {
-        await permissionStore.loadRolePagePermission()
-      } catch { /* ignore */ }
-    }
-    const can = permissionStore.canAccess(to.path, role)
-    if (!can) {
-      next('/dashboard')
-      return
+    if (role !== 'superAdmin') {
+      if (!permissionStore.rolePagePermission.superAdmin?.length) {
+        try {
+          await permissionStore.loadRolePagePermission()
+        } catch { /* ignore */ }
+      }
+      const can = permissionStore.canAccess(to.path, role)
+      if (!can) {
+        next('/dashboard')
+        return
+      }
     }
   }
   next()

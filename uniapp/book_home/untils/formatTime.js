@@ -21,8 +21,9 @@ export const formatTime = (time) => {
       date = new Date(time)
     }
   } else {
-    // 字符串时间
-    date = new Date(time)
+    // 字符串时间：将 MySQL datetime 格式 "YYYY-MM-DD HH:MM:SS" 转为 ISO 格式
+    const normalized = String(time).replace(' ', 'T')
+    date = new Date(normalized)
   }
 
   // 检查是否为有效日期
@@ -59,7 +60,8 @@ export const formatRelativeTime = (time) => {
       date = new Date(time)
     }
   } else {
-    date = new Date(time)
+    const normalized = String(time).replace(' ', 'T')
+    date = new Date(normalized)
   }
 
   if (isNaN(date.getTime())) return '-'

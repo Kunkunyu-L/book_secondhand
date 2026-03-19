@@ -5,6 +5,8 @@ import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
 import { useAuthStore } from '../stores/auth'
 import { getCaptchaApi } from '../api'
+import { getImageUrl } from '../utils/image'
+import axios from 'axios'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -12,12 +14,34 @@ const loading = ref(false)
 const form = reactive({
   username: '',
   password: '',
-  identity: 'admin' as 'admin' | 'service',
   captchaToken: '',
   captchaValue: '',
 })
 const captchaQuestion = ref('')
 const captchaLoading = ref(false)
+
+const siteConfig = reactive({
+  site_name: 'Book Secondhand',
+  site_description: '二手书交易管理平台',
+  app_slogan: '让教材与好书，被更多人看到',
+  site_logo: '',
+  icp_number: '',
+})
+
+const loadSiteConfig = async () => {
+  try {
+    const baseURL = import.meta.env.VITE_API_BASE_URL || ''
+    const res = await axios.get(`${baseURL}/home/config`)
+    if (res.data?.status === 200 && res.data.data) {
+      const c = res.data.data
+      if (c.site_name) siteConfig.site_name = c.site_name
+      if (c.site_description) siteConfig.site_description = c.site_description
+      if (c.app_slogan) siteConfig.app_slogan = c.app_slogan
+      if (c.site_logo) siteConfig.site_logo = c.site_logo
+      if (c.icp_number) siteConfig.icp_number = c.icp_number
+    }
+  } catch { /* 使用默认值 */ }
+}
 
 const fetchCaptcha = async () => {
   captchaLoading.value = true
@@ -49,7 +73,6 @@ const handleLogin = async () => {
     await authStore.login({
       username: form.username,
       password: form.password,
-      identity: form.identity,
       captchaToken: form.captchaToken,
       captchaValue: form.captchaValue.trim(),
     })
@@ -63,7 +86,7 @@ const handleLogin = async () => {
   }
 }
 
-onMounted(fetchCaptcha)
+onMounted(() => { fetchCaptcha(); loadSiteConfig() })
 </script>
 
 <template>
@@ -72,14 +95,15 @@ onMounted(fetchCaptcha)
     <div class="login-left">
       <div class="left-inner">
         <div class="brand">
-          <div class="brand-logo">B</div>
+          <el-image v-if="siteConfig.site_logo" :src="getImageUrl(siteConfig.site_logo)" class="brand-logo-img" fit="contain" />
+          <div v-else class="brand-logo">{{ siteConfig.site_name?.charAt(0) || 'B' }}</div>
           <div class="brand-text">
-            <div class="brand-title">Book Secondhand</div>
-            <div class="brand-sub">二手书交易管理平台</div>
+            <div class="brand-title">{{ siteConfig.site_name }}</div>
+            <div class="brand-sub">{{ siteConfig.site_description }}</div>
           </div>
         </div>
         <div class="slogan">
-          <h1>让教材与好书，被更多人看到</h1>
+          <h1>{{ siteConfig.app_slogan }}</h1>
           <p>统一管理平台图书、用户闲置、订单与售后，让二手书的流转更高效。</p>
         </div>
         <div class="highlights">
@@ -109,28 +133,6 @@ onMounted(fetchCaptcha)
           </div>
 
           <el-form :model="form" class="login-form" @submit.prevent="handleLogin">
-          <el-form-item>
-            <el-select
-              v-model="form.identity"
-              placeholder="选择登录身份"
-              size="large"
-              class="identity-select"
-            >
-              <el-option label="管理员" value="admin">
-                <span class="option-label">
-                  <el-icon><UserFilled /></el-icon>
-                  管理员
-                </span>
-              </el-option>
-              <el-option label="客服人员" value="service">
-                <span class="option-label">
-                  <el-icon><Service /></el-icon>
-                  客服人员
-                </span>
-              </el-option>
-            </el-select>
-          </el-form-item>
-
           <el-form-item>
             <el-input
               v-model="form.username"
@@ -196,6 +198,7 @@ onMounted(fetchCaptcha)
       </div>
     </div>
   </div>
+  <p v-if="siteConfig.icp_number" class="icp-number">{{ siteConfig.icp_number }}</p>
 </template>
 
 <style scoped>
@@ -424,6 +427,25 @@ onMounted(fetchCaptcha)
   font-size: 12px;
   color: #9ca3af;
   margin: 18px 0 0;
+}
+
+.icp-number {
+  position: fixed;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  color: #c0c4cc;
+  margin: 0;
+  z-index: 10;
+}
+
+.brand-logo-img {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  flex-shrink: 0;
 }
 
 @media (max-width: 960px) {

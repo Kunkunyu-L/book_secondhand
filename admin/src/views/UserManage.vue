@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getUsersApi, updateUserStatusApi, addViolationApi, updateUserRoleApi, addUserApi } from '../api'
+import { getUsersApi, updateUserStatusApi, addViolationApi, updateUserRoleApi, addUserApi, updateUserApi, deleteUserApi } from '../api'
 import { useRouter } from 'vue-router'
 import { formatTime } from '../utils/formatTime'
+import { uploadImage } from '../utils/upload'
+import { getImageUrl } from '../utils/image'
 
 const router = useRouter()
 const tableData = ref<any[]>([])
@@ -112,6 +114,59 @@ const submitRoleUpdate = async () => {
   }
 }
 
+// 编辑用户弹窗
+const editDialogVisible = ref(false)
+const editUser = ref<any>(null)
+const avatarUploading = ref(false)
+const editForm = ref({ nickname: '', phone: '', school: '', major: '', avatar: '', account: 0 as any })
+
+const openEditDialog = (row: any) => {
+  editUser.value = row
+  editForm.value = {
+    nickname: row.nickname || '',
+    phone: row.phone || '',
+    school: row.school || '',
+    major: row.major || '',
+    avatar: row.avatar || '',
+    account: row.account ?? 0,
+  }
+  editDialogVisible.value = true
+}
+
+const handleAvatarUpload = async (options: { file: File }) => {
+  avatarUploading.value = true
+  try {
+    const { url } = await uploadImage(options.file, 'avatar')
+    editForm.value.avatar = url
+    ElMessage.success('头像上传成功')
+  } catch (e: any) {
+    ElMessage.error(e.message || '上传失败')
+  } finally {
+    avatarUploading.value = false
+  }
+}
+
+const submitEditUser = async () => {
+  try {
+    const payload: any = { id: editUser.value.id, ...editForm.value }
+    payload.account = payload.account === '' || payload.account === null || payload.account === undefined ? 0 : Number(payload.account)
+    const res: any = await updateUserApi(payload)
+    if (res.status === 200) {
+      ElMessage.success('更新成功')
+      editDialogVisible.value = false
+      loadData()
+    }
+  } catch { /* error */ }
+}
+
+const handleDeleteUser = async (row: any) => {
+  try {
+    await ElMessageBox.confirm(`确定要删除用户「${row.username}」吗？此操作不可恢复！`, '警告', { type: 'error', confirmButtonText: '确定删除', cancelButtonText: '取消' })
+    const res: any = await deleteUserApi({ id: row.id })
+    if (res.status === 200) { ElMessage.success('删除成功'); loadData() }
+  } catch { /* cancelled */ }
+}
+
 const openAddUserDialog = () => {
   addUserForm.value = {
     username: '',
@@ -184,7 +239,14 @@ onMounted(loadData)
       <el-table-column type="index" label="序号" width="60" align="center" />
       <el-table-column label="头像" width="60" align="center">
         <template #default="{ row }">
-          <el-avatar :size="30" :src="row.avatar"><el-icon><User /></el-icon></el-avatar>
+          <el-avatar
+            :size="30"
+            :src="getImageUrl(row.avatar)"
+            style="cursor:pointer"
+            @click="openEditDialog(row)"
+          >
+            <el-icon><User /></el-icon>
+          </el-avatar>
         </template>
       </el-table-column>
       <el-table-column prop="username" label="用户名" width="110" />
@@ -223,15 +285,17 @@ onMounted(loadData)
       <el-table-column label="注册时间" min-width="160">
         <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="280" fixed="right" align="center">
+      <el-table-column label="操作" width="340" fixed="right" align="center">
         <template #default="{ row }">
           <div style="white-space: nowrap;">
+            <el-button type="primary" text size="small" @click="openEditDialog(row)" style="margin: 0 2px;">编辑</el-button>
             <el-button :type="row.status ? 'danger' : 'success'" text size="small" @click="handleStatusToggle(row)" style="margin: 0 2px;">
               {{ row.status ? '禁用' : '启用' }}
             </el-button>
-            <el-button type="warning" text size="small" @click="openViolationDialog(row)" style="margin: 0 2px;">违规处理</el-button>
+            <el-button type="warning" text size="small" @click="openViolationDialog(row)" style="margin: 0 2px;">违规</el-button>
             <el-button type="primary" text size="small" @click="viewViolationHistory(row)" style="margin: 0 2px;">记录</el-button>
-            <el-button type="info" text size="small" @click="openRoleDialog(row)" style="margin: 0 2px;">修改角色</el-button>
+            <el-button type="info" text size="small" @click="openRoleDialog(row)" style="margin: 0 2px;">角色</el-button>
+            <el-button type="danger" text size="small" @click="handleDeleteUser(row)" style="margin: 0 2px;">删除</el-button>
           </div>
         </template>
       </el-table-column>
@@ -289,6 +353,49 @@ onMounted(loadData)
       </template>
     </el-dialog>
 
+    <!-- 编辑用户弹窗 -->
+    <el-dialog v-model="editDialogVisible" title="编辑用户信息" width="500px" destroy-on-close>
+      <p style="margin-bottom:12px">
+        用户：<strong>{{ editUser?.nickname || editUser?.username }}</strong>
+        <span style="color:#909399;margin-left:8px">({{ editUser?.username }})</span>
+      </p>
+      <el-form :model="editForm" label-width="80px">
+        <el-form-item label="头像">
+          <el-upload
+            :show-file-list="false"
+            :http-request="handleAvatarUpload"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+          >
+            <template #tip><span class="el-upload__tip">支持 jpg/png/gif/webp，单张不超过 5MB</span></template>
+            <div v-if="editForm.avatar" class="upload-preview">
+              <el-avatar :size="60" :src="getImageUrl(editForm.avatar)" />
+              <span class="upload-tip">点击更换</span>
+            </div>
+            <el-button v-else type="primary" :loading="avatarUploading">上传头像</el-button>
+          </el-upload>
+        </el-form-item>
+        <el-form-item label="昵称">
+          <el-input v-model="editForm.nickname" placeholder="请输入昵称" maxlength="50" />
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="editForm.phone" placeholder="请输入手机号" maxlength="20" />
+        </el-form-item>
+        <el-form-item label="余额">
+          <el-input v-model="editForm.account" placeholder="余额" type="number" />
+        </el-form-item>
+        <el-form-item label="学校">
+          <el-input v-model="editForm.school" placeholder="请输入学校名称" maxlength="100" />
+        </el-form-item>
+        <el-form-item label="专业">
+          <el-input v-model="editForm.major" placeholder="请输入专业名称" maxlength="100" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitEditUser">保存</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 添加用户弹窗 -->
     <el-dialog v-model="addUserDialogVisible" title="添加用户" width="500px" destroy-on-close>
       <el-form :model="addUserForm" label-width="80px" :rules="userFormRules" ref="addUserFormRef">
@@ -323,4 +430,6 @@ onMounted(loadData)
 
 <style scoped>
 .pagination { display: flex; justify-content: flex-end; margin-top: 16px; }
+.upload-preview { cursor: pointer; display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
+.upload-tip { font-size: 12px; color: #909399; }
 </style>

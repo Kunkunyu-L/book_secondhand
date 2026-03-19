@@ -43,7 +43,7 @@ exports.getBookPlatformInfo = (req, res) => {
         platform_book
       LEFT JOIN book_condition_price 
         ON platform_book.id = book_condition_price.book_id 
-        AND book_condition_price.type COLLATE utf8mb4_unicode_ci = 'platform'
+        AND book_condition_price.type = 'platform'
       LEFT JOIN book_category 
         ON platform_book.category = book_category.id
   `;
@@ -71,7 +71,7 @@ exports.getBookUserInfo = (req, res) => {
       user_book
     LEFT JOIN book_condition_price 
       ON user_book.id = book_condition_price.book_id 
-      AND book_condition_price.type COLLATE utf8mb4_unicode_ci = 'user'
+      AND book_condition_price.type = 'user'
     LEFT JOIN book_category 
       ON user_book.category = book_category.id
     LEFT JOIN user 
@@ -123,7 +123,7 @@ exports.getBookMarketInfo = (req, res) => {
         'user' AS source
       FROM user_book ub
       LEFT JOIN book_condition_price bcp 
-        ON ub.id = bcp.book_id AND bcp.type COLLATE utf8mb4_unicode_ci = 'user'
+        ON ub.id = bcp.book_id AND bcp.type = 'user'
       LEFT JOIN \`user\` u 
         ON ub.user_id = u.id
       WHERE ub.status = 'onsale'
@@ -162,7 +162,7 @@ exports.getBookMarketInfo = (req, res) => {
         'platform' AS source
       FROM platform_book pb
       LEFT JOIN book_condition_price bcp 
-        ON pb.id = bcp.book_id AND bcp.type COLLATE utf8mb4_unicode_ci = 'platform'
+        ON pb.id = bcp.book_id AND bcp.type = 'platform'
       WHERE pb.status = 'onsale'
     )
     ORDER BY RAND();
@@ -204,7 +204,7 @@ exports.getBookDetailInfo = (req, res) => {
       LEFT JOIN 
         book_condition_price bcp 
         ON pb.id = bcp.book_id 
-        AND bcp.type COLLATE utf8mb4_unicode_ci = ? 
+        AND bcp.type = ? 
       LEFT JOIN 
         user u 
         ON pb.user_id = u.id 
@@ -235,13 +235,13 @@ exports.getBanners = (req, res) => {
 // 获取公告列表（已发布的）
 exports.getAnnouncements = (req, res) => {
   const { type } = req.query; // notice/activity/system
-  let sql = "SELECT id, title, content, type, created_at FROM announcement WHERE status='published'";
+  let sql = "SELECT id, title, content, type, created_at FROM announcement WHERE status=1";
   const params = [];
   if (type) {
     sql += " AND type=?";
     params.push(type);
   }
-  sql += " ORDER BY created_at DESC LIMIT 20";
+  sql += " ORDER BY sort DESC, created_at DESC LIMIT 20";
   db.query(sql, params, (err, results) => {
     if (err) return res.cc(err);
     res.send({ status: 200, message: "获取公告成功", data: results });
@@ -252,7 +252,7 @@ exports.getAnnouncements = (req, res) => {
 exports.getAnnouncementDetail = (req, res) => {
   const { id } = req.query;
   if (!id) return res.cc("缺少参数", 400);
-  db.query("SELECT * FROM announcement WHERE id=? AND status='published'", [id], (err, results) => {
+  db.query("SELECT * FROM announcement WHERE id=? AND status=1", [id], (err, results) => {
     if (err) return res.cc(err);
     if (results.length === 0) return res.cc("公告不存在", 404);
     res.send({ status: 200, message: "获取公告详情成功", data: results[0] });
@@ -308,7 +308,7 @@ exports.getFaqs = (req, res) => {
 
 // 获取可领取优惠券列表（公开）
 exports.getAvailableCoupons = (req, res) => {
-  const sql = `SELECT id, name, type, discount_value, min_amount, start_time, end_time, total_count, used_count 
+  const sql = `SELECT id, name, type, value AS discount_value, min_amount, start_time, end_time, total_count, used_count 
     FROM coupon WHERE status=1 AND end_time > NOW() AND (total_count=0 OR used_count < total_count) 
     ORDER BY created_at DESC`;
   db.query(sql, (err, results) => {
@@ -342,7 +342,7 @@ exports.searchBooks = (req, res) => {
         bcp.price, bcp.original_price, bcp.\`condition\`, bcp.stock,
         NULL AS nickname, NULL AS avatar, 'platform' AS source
       FROM platform_book b
-      LEFT JOIN book_condition_price bcp ON b.id = bcp.book_id AND bcp.type COLLATE utf8mb4_unicode_ci = 'platform'
+      LEFT JOIN book_condition_price bcp ON b.id = bcp.book_id AND bcp.type = 'platform'
       ${where}
     )
     UNION ALL
@@ -351,7 +351,7 @@ exports.searchBooks = (req, res) => {
         bcp.price, bcp.original_price, bcp.\`condition\`, bcp.stock,
         u.nickname, u.avatar, 'user' AS source
       FROM user_book b
-      LEFT JOIN book_condition_price bcp ON b.id = bcp.book_id AND bcp.type COLLATE utf8mb4_unicode_ci = 'user'
+      LEFT JOIN book_condition_price bcp ON b.id = bcp.book_id AND bcp.type = 'user'
       LEFT JOIN \`user\` u ON b.user_id = u.id
       ${where}
     )

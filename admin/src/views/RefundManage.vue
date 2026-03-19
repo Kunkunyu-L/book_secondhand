@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getRefundListApi, updateRefundStatusApi } from '../api'
+import { formatTime } from '../utils/formatTime'
 
 const tableData = ref<any[]>([])
 const total = ref(0)
@@ -101,7 +102,9 @@ onMounted(loadData)
       <el-table-column prop="admin_note" label="处理备注" min-width="120" show-overflow-tooltip>
         <template #default="{ row }">{{ row.admin_note || '-' }}</template>
       </el-table-column>
-      <el-table-column prop="created_at" label="申请时间" width="170" />
+      <el-table-column label="申请时间" width="170">
+        <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
+      </el-table-column>
       <el-table-column label="操作" width="200" fixed="right" align="center">
         <template #default="{ row }">
           <template v-if="row.status === 'pending' || row.status === 'negotiating'">

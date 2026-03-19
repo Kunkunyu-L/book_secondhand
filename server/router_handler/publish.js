@@ -55,7 +55,7 @@ exports.getBookDetail = (req, res) => {
   if (bookType === "platform") {
     const sql = `SELECT pb.*, pb.description AS book_story, bcp.price, bcp.original_price, bcp.\`condition\`, bcp.condition_desc
       FROM platform_book pb
-      LEFT JOIN book_condition_price bcp ON pb.id = bcp.book_id AND bcp.type COLLATE utf8mb4_unicode_ci = 'platform'
+      LEFT JOIN book_condition_price bcp ON pb.id = bcp.book_id AND bcp.type = 'platform'
       WHERE pb.id = ? AND pb.user_id = ?`;
     db.query(sql, [bookId, userId], (err, results) => {
       if (err) return res.cc(err);
@@ -67,7 +67,7 @@ exports.getBookDetail = (req, res) => {
 
   const sql = `SELECT ub.*, bcp.price, bcp.original_price, bcp.\`condition\`, bcp.condition_desc
     FROM user_book ub
-    LEFT JOIN book_condition_price bcp ON ub.id = bcp.book_id AND bcp.type COLLATE utf8mb4_unicode_ci = 'user'
+    LEFT JOIN book_condition_price bcp ON ub.id = bcp.book_id AND bcp.type = 'user'
     WHERE ub.id = ? AND ub.user_id = ?`;
   db.query(sql, [bookId, userId], (err, results) => {
     if (err) return res.cc(err);
@@ -144,7 +144,7 @@ exports.getMyBooks = (req, res) => {
             bcp.price, bcp.original_price, bcp.\`condition\`, bcp.condition_desc, bcp.stock,
             'user' AS book_type
      FROM user_book ub
-     LEFT JOIN book_condition_price bcp ON ub.id = bcp.book_id AND bcp.type COLLATE utf8mb4_unicode_ci = 'user'
+     LEFT JOIN book_condition_price bcp ON ub.id = bcp.book_id AND bcp.type = 'user'
      WHERE ub.user_id = ?)
     UNION ALL
     (SELECT pb.id, pb.user_id, pb.isbn, pb.title, pb.author, pb.publisher, pb.publish_date,
@@ -153,7 +153,7 @@ exports.getMyBooks = (req, res) => {
             bcp.price, bcp.original_price, bcp.\`condition\`, bcp.condition_desc, bcp.stock,
             'platform' AS book_type
      FROM platform_book pb
-     LEFT JOIN book_condition_price bcp ON pb.id = bcp.book_id AND bcp.type COLLATE utf8mb4_unicode_ci = 'platform'
+     LEFT JOIN book_condition_price bcp ON pb.id = bcp.book_id AND bcp.type = 'platform'
      WHERE pb.user_id = ?)
     ORDER BY create_datetime DESC
   `;

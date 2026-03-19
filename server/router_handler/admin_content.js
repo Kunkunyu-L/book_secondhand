@@ -6,7 +6,16 @@ const query = (sql, params = []) => new Promise((resolve, reject) => {
 // ==================== 公告管理 ====================
 exports.getAnnouncements = async (req, res) => {
   try {
-    const list = await query("SELECT * FROM announcement ORDER BY sort DESC, created_at DESC");
+    const type = req.query.type || "";
+    const status = req.query.status;
+    const conditions = [];
+    const params = [];
+    if (type) { conditions.push("type=?"); params.push(type); }
+    if (status !== undefined && status !== "") { conditions.push("status=?"); params.push(Number(status)); }
+    let sql = "SELECT * FROM announcement";
+    if (conditions.length > 0) sql += " WHERE " + conditions.join(" AND ");
+    sql += " ORDER BY sort DESC, created_at DESC";
+    const list = await query(sql, params);
     res.send({ status: 200, data: list });
   } catch (err) { res.cc(err); }
 };
@@ -18,6 +27,7 @@ exports.addAnnouncement = async (req, res) => {
     await query("INSERT INTO announcement SET ?", {
       title, content: content || "", type: type || "notice",
       status: status !== undefined ? status : 1, sort: sort || 0, admin_id: req.auth.id,
+      created_at: new Date(),
     });
     res.send({ status: 200, message: "添加成功" });
   } catch (err) { res.cc(err); }

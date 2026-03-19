@@ -33,6 +33,7 @@
 <script>
 import request from '@/untils/request.js';
 import { getImageUrl } from '@/untils/config.js';
+import { formatTime } from '@/untils/formatTime.js';
 export default {
   data() {
     return {
@@ -45,11 +46,7 @@ export default {
   },
   methods: {
     getImageUrl,
-    formatTime(t) {
-      if (!t) return '';
-      const d = new Date(t);
-      return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + ' ' + d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
-    },
+    formatTime,
     async loadList() {
       this.loading = true;
       try {

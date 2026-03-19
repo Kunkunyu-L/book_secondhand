@@ -45,9 +45,20 @@
         :interval="4000"
       >
         <swiper-item v-for="item in banners" :key="item.id" @click="onBannerClick(item)">
-          <image :src="item.image_url" mode="aspectFill" class="banner-img"></image>
+          <image :src="getImageUrl(item.image_url)" mode="aspectFill" class="banner-img"></image>
         </swiper-item>
       </swiper>
+
+      <!-- 通知公告滚动条 -->
+      <view v-if="notices.length > 0" class="notice-bar" @click="goToNoticeList">
+        <uni-icons type="sound" size="16" color="#e6a23c" style="flex-shrink:0"></uni-icons>
+        <swiper class="notice-swiper" vertical autoplay :interval="3000" circular :indicator-dots="false">
+          <swiper-item v-for="n in notices" :key="n.id">
+            <text class="notice-text">{{ n.title }}</text>
+          </swiper-item>
+        </swiper>
+        <uni-icons type="right" size="14" color="#ccc" style="flex-shrink:0"></uni-icons>
+      </view>
 
       <!-- ④ 推荐区（仅登录且填了学校/专业时显示） -->
       <view v-if="recommended.length > 0" class="section">
@@ -177,6 +188,7 @@ export default {
       banners: [],
       categories: [],
       recommended: [],
+      notices: [],
       tabSticked: false,
       scrollTop: 0,
       bannerHeight: 360,
@@ -213,6 +225,7 @@ export default {
           request({ url: '/home/banners', method: 'GET' }).catch(() => ({ data: [] })),
           request({ url: '/home/books/market', method: 'GET' }).catch(() => ({ data: [] })),
           request({ url: '/home/categories', method: 'GET' }).catch(() => ({ data: [] })),
+          request({ url: '/home/announcements?type=notice', method: 'GET' }).catch(() => ({ data: [] })),
         ];
         if (token) {
           requests.push(
@@ -223,8 +236,9 @@ export default {
         this.banners = results[0].data || [];
         this.marketBook = results[1].data || [];
         this.categories = results[2].data || [];
-        if (token && results[3]) {
-          const user = results[3].data || {};
+        this.notices = results[3].data || [];
+        if (token && results[4]) {
+          const user = results[4].data || {};
           if (user.major || user.school) {
             this.buildRecommended(user.major || '');
           }
@@ -240,6 +254,9 @@ export default {
         .filter(b => b._score > 0)
         .sort((a, b) => b._score - a._score);
       this.recommended = scored.slice(0, 12);
+    },
+    goToNoticeList() {
+      uni.navigateTo({ url: '/pages/notifications/notices' });
     },
     switchSource(source) {
       this.currentSource = source;
@@ -338,6 +355,29 @@ export default {
 .banner-img {
   width: 100%;
   height: 360rpx;
+}
+
+/* 通知公告栏 */
+.notice-bar {
+  display: flex;
+  align-items: center;
+  background: #fffbeb;
+  padding: 16rpx 24rpx;
+  gap: 14rpx;
+  border-bottom: 1rpx solid #fde68a;
+}
+.notice-swiper {
+  flex: 1;
+  height: 40rpx;
+}
+.notice-text {
+  font-size: 26rpx;
+  color: #92400e;
+  line-height: 40rpx;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ④ 推荐区 */
