@@ -31,7 +31,7 @@
         </view>
         <text class="ticket-content">{{ item.content }}</text>
         <view class="ticket-footer">
-          <text class="ticket-time">{{ item.created_at }}</text>
+          <text class="ticket-time">{{ formatTime(item.created_at || item.updated_at) }}</text>
           <text class="ticket-priority" :class="'p-' + item.priority">{{ priorityLabel(item.priority) }}</text>
         </view>
         <view class="ticket-reply" v-if="item.reply">
@@ -64,11 +64,17 @@ const submit = async () => {
   if (!title.value.trim()) return uni.showToast({ title: '请输入标题', icon: 'none' })
   if (!content.value.trim()) return uni.showToast({ title: '请描述问题', icon: 'none' })
   submitting.value = true
+  const ticket_no = generateTicketNo()
   try {
     await request({
       url: '/client/ticket',
       method: 'POST',
-      data: { title: title.value, content: content.value, related_order_id: relatedOrderId.value || undefined }
+      data: {
+        ticket_no,
+        title: title.value,
+        content: content.value,
+        related_order_id: relatedOrderId.value || undefined
+      }
     })
     uni.showToast({ title: '工单已提交', icon: 'success' })
     title.value = ''
@@ -92,6 +98,21 @@ const loadTickets = async () => {
 
 const statusLabel = (s) => ({ pending: '待处理', processing: '处理中', closed: '已关闭' }[s] || s)
 const priorityLabel = (p) => ({ low: '低', normal: '普通', high: '紧急', urgent: '特急' }[p] || p)
+
+const generateTicketNo = () => {
+  // 30位以内：时间戳 + 随机数（避免重复）
+  const t = Date.now().toString(36).toUpperCase()
+  const r = Math.random().toString(36).slice(2, 8).toUpperCase()
+  return `T${t}${r}`.slice(0, 30)
+}
+
+const formatTime = (time) => {
+  if (!time) return '-'
+  const d = new Date(time)
+  if (Number.isNaN(d.getTime())) return String(time)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
 </script>
 
 <style scoped>

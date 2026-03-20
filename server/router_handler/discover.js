@@ -123,3 +123,25 @@ exports.createComment = (req, res) => {
     res.send({ status: 200, message: "评论成功", data: { id: result.insertId } });
   });
 }
+
+// 删除我发布的帖子（需登录）
+// 约定：前端以 body 传 { id }
+exports.deleteMyPost = (req, res) => {
+  const userId = req.auth.id;
+  const { id } = req.body || {};
+  if (!id) return res.cc("参数不完整", 400);
+
+  // 同步删除点赞/评论，再删除帖子本身（仅限本人）
+  db.query("DELETE FROM discover_post_like WHERE post_id=?", [id], (err) => {
+    if (err) return res.cc(err);
+    db.query("DELETE FROM discover_post_comment WHERE post_id=?", [id], (err2) => {
+      if (err2) return res.cc(err2);
+
+      db.query("DELETE FROM discover_post WHERE id=? AND user_id=?", [id, userId], (err3, result) => {
+        if (err3) return res.cc(err3);
+        if (!result || result.affectedRows === 0) return res.cc("帖子不存在或无权限", 404);
+        res.send({ status: 200, message: "删除成功" });
+      });
+    });
+  });
+};

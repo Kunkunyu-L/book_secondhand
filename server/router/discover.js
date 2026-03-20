@@ -17,4 +17,8 @@ router.get("/posts/:id/comments", handler.getComments);
 // 发表评论（需认证）
 router.post("/posts/:id/comments", handler.createComment);
 
+// 删除我发布的帖子（需登录）
+// 约定：前端以 body 传 { id }
+router.delete("/posts", handler.deleteMyPost);
+
 module.exports = router;

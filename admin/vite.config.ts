@@ -18,7 +18,17 @@ export default defineConfig({
         target: "http://localhost:3000",
         changeOrigin: true,
       },
-      "/chat": {
+      // 注意：前端路由里也包含 `chat-...`，如果代理配置成 `/chat` 会误代理页面刷新
+      // 这里仅代理后端真正的聊天 REST 接口，避免命中 `/chat-sessions-manage` 等前端路由
+      "/chat/messages": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+      "/chat/sessions": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+      "/chat/session": {
         target: "http://localhost:3000",
         changeOrigin: true,
       },

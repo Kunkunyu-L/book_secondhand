@@ -559,6 +559,8 @@ CREATE TABLE `service_ticket`  (
   `content` text CHARACTER SET utf8 COLLATE utf8_general_ci COMMENT '描述',
   `status` varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
   `priority` varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
+  `order_id` bigint(20) DEFAULT NULL COMMENT '关联订单ID',
+  `order_no` varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL COMMENT '订单编号（可选）',
   `assigned_to` bigint(20) DEFAULT NULL COMMENT '分配给谁',
   `reply` text CHARACTER SET utf8 COLLATE utf8_general_ci COMMENT '处理回复',
   `admin_id` bigint(20) DEFAULT NULL COMMENT '处理人',

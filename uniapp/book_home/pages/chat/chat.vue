@@ -9,7 +9,7 @@
       <block v-for="(m, idx) in messages" :key="m.id">
         <!-- 时间分割线 -->
         <view v-if="shouldShowTime(idx)" class="time-divider">
-          <text class="time-divider-text">{{ formatMsgTimeFull(m.created_at) }}</text>
+          <text class="time-divider-text">{{ formatMsgTimeFull(m.created_at || m.updated_at) }}</text>
         </view>
         <!-- 气泡 -->
         <view class="msg-item" :id="'msg-' + idx" :class="{ mine: m.sender_id == userId }">
@@ -48,7 +48,7 @@
 <script>
 import request from '../../untils/request.js'
 import io from '../../untils/socket-client.js'
-import { baseURL, getImageUrl } from '../../untils/config.js'
+import { baseURL, getImageUrl as buildImageUrl } from '../../untils/config.js'
 
 export default {
   data() {
@@ -66,17 +66,17 @@ export default {
       socketReady: false  // 连接成功后才可发送，用于隐藏「连接中」提示
     }
   },
-  onLoad(options) {
+  async onLoad(options) {
     this.sessionId = options.session_id
     this.targetName = decodeURIComponent(options.target_name || '聊天')
     uni.setNavigationBarTitle({ title: this.targetName })
-    const userInfo = uni.getStorageSync('userInfo')
-    this.userId = userInfo?.id || ''
-    this.userAvatar = userInfo?.avatar || ''
+    await this.ensureMe()
   },
   onShow() {
     this.loadMessages()
     this.connectSocket()
+    // 无论 socket 是否稳定，都兜底轮询，避免出现“必须重新打开才刷新”
+    this.startPolling()
   },
   onHide() {
     this.disconnectSocket()
@@ -85,7 +85,36 @@ export default {
     this.disconnectSocket()
   },
   methods: {
-    async loadMessages() {
+    async ensureMe() {
+      const token = uni.getStorageSync('token')
+      if (!token) {
+        this.userId = ''
+        this.userAvatar = ''
+        return
+      }
+
+      // 优先读取缓存；打包/刷新后若缓存缺失，会导致“我发的”样式识别失败
+      let userInfo = uni.getStorageSync('userInfo') || {}
+      if (!userInfo?.id) {
+        try {
+          const info = await request({ url: '/my/getUserInfo', method: 'GET' })
+          if (info?.data) {
+            uni.setStorageSync('userInfo', info.data)
+            userInfo = info.data
+          }
+        } catch (e) {
+          // 不中断聊天页加载；至少保证页面可展示消息
+          console.warn('[Chat] ensureMe getUserInfo failed:', e)
+        }
+      }
+
+      this.userId = userInfo?.id || ''
+      this.userAvatar = userInfo?.avatar || ''
+    },
+    getImageUrl(url) {
+      return buildImageUrl(url)
+    },
+    async loadMessages(preserveOnEmpty = false) {
       try {
         const res = await request({
           url: '/chat/messages', method: 'GET',
@@ -93,9 +122,13 @@ export default {
         })
         if (res.status === 200) {
           // 服务端返回 DESC（最新在前），翻转后使最旧在上、最新在下
-          this.messages = (res.data.list || []).reverse()
-          this.$nextTick(() => this.scrollToBottom())
+          const list = (res.data.list || [])
+          if (!(preserveOnEmpty && list.length === 0)) {
+            this.messages = list.reverse()
+            this.$nextTick(() => this.scrollToBottom())
+          }
         }
+        return this.messages.length
       } catch (e) { console.error(e) }
     },
 
@@ -143,7 +176,8 @@ export default {
     startPolling() {
       if (this.pollTimer) return
       this.pollTimer = setInterval(() => {
-        this.loadMessages()
+        // 轮询时如果服务端返回空列表，则不覆盖已有消息（避免“发送成功但界面瞬间清空”）
+        this.loadMessages(this.messages.length > 0)
       }, 5000)
     },
 
@@ -180,8 +214,11 @@ export default {
           data: payload
         })
         if (res.status === 200 && res.data) {
+          // 兜底：直接把刚发送的消息展示出来，避免 loadMessages 刷新为空导致看不到
           this.messages.push(res.data)
           this.inputText = ''
+          // 再刷新一次，保证与服务端分页/排序一致
+          await this.loadMessages(true)
           this.$nextTick(() => this.scrollToBottom())
         } else {
           uni.showToast({ title: res.message || '发送失败', icon: 'none' })
@@ -219,9 +256,11 @@ export default {
       if (index === 0) return true
       const cur = this.messages[index]
       const prev = this.messages[index - 1]
-      if (!cur.created_at || !prev.created_at) return false
-      const t1 = new Date(prev.created_at).getTime()
-      const t2 = new Date(cur.created_at).getTime()
+      const curTime = cur.created_at || cur.updated_at
+      const prevTime = prev.created_at || prev.updated_at
+      if (!curTime || !prevTime) return false
+      const t1 = new Date(prevTime).getTime()
+      const t2 = new Date(curTime).getTime()
       // 间隔超过 5 分钟才显示一次时间
       return Math.abs(t2 - t1) > 5 * 60 * 1000
     }

@@ -64,23 +64,23 @@ onMounted(loadData)
     </div>
 
     <el-table :data="tableData" v-loading="loading" border stripe>
-      <el-table-column prop="ticket_no" label="工单号" width="130" show-overflow-tooltip />
-      <el-table-column label="用户" width="100"><template #default="{ row }">{{ row.nickname || row.username }}</template></el-table-column>
-      <el-table-column label="类型" width="70" align="center">
+      <el-table-column prop="ticket_no" label="工单号" width="170" show-overflow-tooltip />
+      <el-table-column label="用户" width="110"><template #default="{ row }">{{ row.nickname || row.username }}</template></el-table-column>
+      <el-table-column label="类型" width="80" align="center">
         <template #default="{ row }"><el-tag size="small">{{ typeMap[row.type] || row.type }}</el-tag></template>
       </el-table-column>
-      <el-table-column prop="title" label="标题" min-width="160" show-overflow-tooltip />
-      <el-table-column label="优先级" width="70" align="center">
+      <el-table-column prop="title" label="标题" min-width="240" show-overflow-tooltip />
+      <el-table-column label="优先级" width="90" align="center">
         <template #default="{ row }"><el-tag :type="(priorityMap[row.priority]?.type || '') as any" size="small">{{ priorityMap[row.priority]?.text }}</el-tag></template>
       </el-table-column>
-      <el-table-column label="状态" width="80" align="center">
+      <el-table-column label="状态" width="90" align="center">
         <template #default="{ row }"><el-tag :type="(statusMap[row.status]?.type || '') as any" size="small">{{ statusMap[row.status]?.text }}</el-tag></template>
       </el-table-column>
-      <el-table-column label="分配给" width="90"><template #default="{ row }">{{ row.assigned_name || '-' }}</template></el-table-column>
-      <el-table-column label="创建时间" width="160">
-        <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
+      <el-table-column label="分配给" width="120"><template #default="{ row }">{{ row.assigned_name || row.admin_name || '-' }}</template></el-table-column>
+      <el-table-column label="创建时间" width="190">
+        <template #default="{ row }">{{ formatTime(row.created_at || row.updated_at) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="80" fixed="right" align="center">
+      <el-table-column label="操作" width="90" fixed="right" align="center">
         <template #default="{ row }"><el-button type="primary" text size="small" @click="openReply(row)">处理</el-button></template>
       </el-table-column>
     </el-table>

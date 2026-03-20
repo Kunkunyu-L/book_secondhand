@@ -46,8 +46,9 @@ function initSocket(io) {
     if (isBackendRole || socket.user.is_service) {
       socket.join("service_room");
     }
-    // 超级管理员、运营管理员加入管理员房间（新订单、售后等系统通知）
-    if (["superAdmin", "operationAdmin"].includes(userRole)) {
+    // 管理员房间：新订单、售后等系统通知
+    // 为了让客服人员（customerService）也能收到“订单/售后”提示，把 customerService 也纳入
+    if (["superAdmin", "operationAdmin", "customerService"].includes(userRole)) {
       socket.join("admin_room");
     }
 
@@ -72,6 +73,8 @@ function initSocket(io) {
         const result = await query("INSERT INTO chat_message SET ?", {
           session_id, sender_id: userId, sender_role: senderRole,
           content, msg_type, is_read: 0,
+          // 数据库的 created_at 在建表里默认 NULL；写入后能让 REST 分页排序稳定
+          created_at: new Date(),
         });
 
         // 更新会话
@@ -88,17 +91,41 @@ function initSocket(io) {
           created_at: new Date().toISOString(),
         };
 
-        // 推送给会话双方
-        const targetId = isUserSide ? session.target_id : session.user_id;
-        io.to(`user_${targetId}`).emit("new_message", msg);
-        // 如果是平台客服会话, 也推送到客服房间，并写入管理员通知记录
-        if (session.target_type === "service") {
-          socket.to("service_room").emit("new_message", msg);
-          // 仅用户发消息时写通知，避免管理员回复也写入
-          if (senderRole === "user") {
+        // 推送接收方：
+        // - target_type='seller'：会话双方是 user_id 与 target_id，两端都要收到（包含客服/管理员代发时）
+        // - target_type='service'：target_id 通常为 0，仅用户侧（session.user_id）收到
+        const recipients = new Set();
+
+        if (session.target_type === "seller") {
+          const u1 = session.user_id;
+          const u2 = session.target_id;
+          if (String(userId) === String(u1)) {
+            if (u2) recipients.add(u2);
+          } else if (String(userId) === String(u2)) {
+            if (u1) recipients.add(u1);
+          } else {
+            // sender 不是会话两端（例如客服/管理员代发）
+            if (u1) recipients.add(u1);
+            if (u2) recipients.add(u2);
+          }
+        } else {
+          // service 会话：只推给用户侧
+          if (session.user_id) recipients.add(session.user_id);
+        }
+
+        for (const uid of recipients) {
+          io.to(`user_${uid}`).emit("new_message", msg);
+        }
+
+        // 只推送给“已分配客服”（用于客服端实时刷新）
+        if (session.assigned_service) {
+          io.to(`user_${session.assigned_service}`).emit("new_message", msg);
+
+          // 仅用户发消息时写通知（发给已分配客服）
+          if (senderRole === "user" && session.target_type === "service") {
             await query(
-              "INSERT INTO notification (user_id, title, content, type) VALUES (0, ?, ?, 'message')",
-              ["新客服消息", "有用户发来客服消息，请及时回复"]
+              "INSERT INTO notification (user_id, title, content, type) VALUES (?, ?, ?, 'message')",
+              [session.assigned_service, "新客服消息", "有用户发来客服消息，请及时回复"]
             ).catch(() => {});
           }
         }
@@ -114,19 +141,43 @@ function initSocket(io) {
     socket.on("create_session", async (data, callback) => {
       try {
         const { target_id, target_type = "seller" } = data;
-        if (!target_id) return callback?.({ error: "参数不完整" });
+        const rawTargetIdNum = Number(target_id);
+
+        // 容错：如果误传了 service 但 target_id != 0，则归一为 seller（用户-用户会话）
+        let normalizedTargetType = target_type;
+        if (target_type === "service" && rawTargetIdNum && rawTargetIdNum !== 0) {
+          normalizedTargetType = "seller";
+        }
+
+        // 参数校验：平台客服允许 target_id=0；其他类型不允许 0/空
+        if (normalizedTargetType === "service") {
+          if (rawTargetIdNum === undefined || rawTargetIdNum === null || Number.isNaN(rawTargetIdNum)) {
+            return callback?.({ error: "参数不完整" });
+          }
+        } else {
+          if (!rawTargetIdNum) return callback?.({ error: "参数不完整" });
+        }
 
         // 检查是否已有活跃会话
         const existing = await query(
           "SELECT * FROM chat_session WHERE user_id=? AND target_id=? AND target_type=? AND status='active'",
-          [userId, target_id, target_type]
+          [userId, rawTargetIdNum, normalizedTargetType]
         );
         if (existing.length > 0) return callback?.({ success: true, session: existing[0] });
 
         const result = await query("INSERT INTO chat_session SET ?", {
-          user_id: userId, target_id, target_type, status: "active",
+          user_id: userId,
+          target_id: normalizedTargetType === "service" ? (rawTargetIdNum || 0) : rawTargetIdNum,
+          target_type: normalizedTargetType,
+          status: "active",
         });
-        const session = { id: result.insertId, user_id: userId, target_id, target_type, status: "active" };
+        const session = {
+          id: result.insertId,
+          user_id: userId,
+          target_id: normalizedTargetType === "service" ? (rawTargetIdNum || 0) : rawTargetIdNum,
+          target_type: normalizedTargetType,
+          status: "active",
+        };
         callback?.({ success: true, session });
       } catch (err) {
         console.error("[Socket] create_session error:", err);

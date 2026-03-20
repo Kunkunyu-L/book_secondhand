@@ -56,20 +56,28 @@
 
 <script>
 import request from '../../untils/request.js'
+import io from '../../untils/socket-client.js'
+import { baseURL } from '../../untils/config.js'
 
 export default {
   data() {
     return {
       sessions: [],
       isLoggedIn: false,
-      swipeOptions: [{ text: '删除', style: { backgroundColor: '#F56C6C' } }]
+      swipeOptions: [{ text: '删除', style: { backgroundColor: '#F56C6C' } }],
+      socket: null,
+      pollTimer: null
     }
   },
   onShow() {
     this.isLoggedIn = !!uni.getStorageSync('token')
     if (this.isLoggedIn) {
       this.loadSessions()
+      this.connectSocket()
     }
+  },
+  onHide() {
+    this.disconnectSocket()
   },
   methods: {
     async loadSessions() {
@@ -78,6 +86,59 @@ export default {
         if (res.status === 200) this.sessions = res.data || []
       } catch (e) {
         console.error(e)
+      }
+    },
+    connectSocket() {
+      const token = uni.getStorageSync('token')
+      if (!token) return
+
+      // 避免重复创建
+      if (this.socket && this.socket.connected) return
+
+      const host = baseURL || 'http://localhost:3000'
+      this.socket = io(host, {
+        query: { token },
+        transports: ['websocket']
+      })
+
+      this.socket.on('connect', () => {
+        // 页面展示即把未读会话标记为已读，保证 badge/列表实时一致
+        if (this.sessions?.length) {
+          this.sessions.forEach(s => {
+            if (s?.unread_user > 0) this.socket.emit('mark_read', { session_id: s.id })
+          })
+        }
+      })
+
+      this.socket.on('new_message', (msg) => {
+        // 新消息到达时直接刷新会话列表
+        // （msg 里不包含 last_message/unread_user 等聚合字段，靠 REST 拉取最稳）
+        if (msg?.session_id) this.loadSessions()
+      })
+
+      this.socket.on('disconnect', () => {
+        // 可选：断线后不强制轮询，避免过多请求
+      })
+
+      // Socket 失败时兜底轮询（可避免 H5/网络不稳定导致“必须重进页面才刷新”）
+      this.socket.on('connect_error', () => {
+        this.startPolling()
+      })
+    },
+    startPolling() {
+      if (this.pollTimer) return
+      this.pollTimer = setInterval(() => {
+        if (this.isLoggedIn) this.loadSessions()
+      }, 8000)
+    },
+    disconnectSocket() {
+      if (this.socket) {
+        this.socket.disconnect()
+        this.socket = null
+      }
+      if (this.pollTimer) {
+        clearInterval(this.pollTimer)
+        this.pollTimer = null
       }
     },
     goChat(session) {

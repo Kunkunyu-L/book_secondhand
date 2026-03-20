@@ -22,9 +22,12 @@ export const formatTime = (time: string | number | Date | null | undefined): str
     }
   } else {
     // 字符串时间
-    // 处理ISO格式的时间字符串，替换Z为+00:00或移除Z
-    const timeStr = String(time).replace(/Z$/, '')
-    date = new Date(timeStr.includes('+') || timeStr.includes('-') ? timeStr : timeStr + 'Z')
+    const timeStrRaw = String(time).trim()
+    // 兼容 MySQL 常见的 `YYYY-MM-DD HH:mm:ss`（JS 对该格式的解析在不同环境下不稳定）
+    let timeStr = timeStrRaw
+    if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/.test(timeStrRaw)) timeStr = timeStrRaw.replace(' ', 'T')
+    if (/^\d{4}-\d{2}-\d{2}$/.test(timeStrRaw)) timeStr = `${timeStrRaw}T00:00:00`
+    date = new Date(timeStr)
   }
 
   // 检查是否为有效日期
@@ -61,7 +64,11 @@ export const formatRelativeTime = (time: string | number | Date | null | undefin
       date = new Date(time)
     }
   } else {
-    date = new Date(time)
+    const timeStrRaw = String(time).trim()
+    let timeStr = timeStrRaw
+    if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/.test(timeStrRaw)) timeStr = timeStrRaw.replace(' ', 'T')
+    if (/^\d{4}-\d{2}-\d{2}$/.test(timeStrRaw)) timeStr = `${timeStrRaw}T00:00:00`
+    date = new Date(timeStr)
   }
 
   if (isNaN(date.getTime())) return '-'

@@ -7,7 +7,6 @@ import { getNotificationsApi, markNotificationReadApi, deleteNotificationApi, ge
 import { connectSocket } from '../utils/socket'
 import { playOrderNotifySound, playChatNotifySound } from '../utils/notificationSound'
 import { ElNotification } from 'element-plus'
-import AdminChat from '../components/AdminChat.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -34,7 +33,7 @@ const defaultOpeneds = computed(() => {
   if (['/users', '/violations'].includes(path)) return ['user-group']
   if (['/payments', '/withdrawals', '/coupons'].includes(path)) return ['transactions']
   if (['/announcements', '/banners', '/discover-posts'].includes(path)) return ['content']
-  if (['/chat-sessions', '/tickets', '/faq-manage'].includes(path)) return ['service']
+  if (['/chat-sessions', '/chat-sessions-manage', '/tickets', '/faq-manage'].includes(path)) return ['service']
   if (path === '/system-config') return []
   return []
 })
@@ -209,8 +208,9 @@ const handleLogout = () => { authStore.logout(); router.push('/login') }
             <el-menu-item v-if="canAccess('/discover-posts')" index="/discover-posts">帖子管理</el-menu-item>
           </el-sub-menu>
 
-          <el-sub-menu v-if="canAccess('/chat-sessions') || canAccess('/tickets') || canAccess('/faq-manage')" index="service">
+          <el-sub-menu v-if="canAccess('/chat-sessions') || canAccess('/chat-sessions-manage') || canAccess('/tickets') || canAccess('/faq-manage')" index="service">
             <template #title><el-icon><Service /></el-icon><span>客服管理</span></template>
+            <el-menu-item v-if="canAccess('/chat-sessions-manage')" index="/chat-sessions-manage">会话管理</el-menu-item>
             <el-menu-item v-if="canAccess('/chat-sessions')" index="/chat-sessions">在线咨询</el-menu-item>
             <el-menu-item v-if="canAccess('/tickets')" index="/tickets">咨询工单</el-menu-item>
             <el-menu-item v-if="canAccess('/faq-manage')" index="/faq-manage">常见问题库</el-menu-item>
@@ -273,8 +273,6 @@ const handleLogout = () => { authStore.logout(); router.push('/login') }
       <el-main class="layout-main"><router-view /></el-main>
     </el-container>
 
-    <!-- 管理端悬浮聊天 -->
-    <AdminChat />
   </el-container>
 </template>
 

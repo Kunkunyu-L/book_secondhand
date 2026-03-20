@@ -130,6 +130,14 @@ exports.getRolePagePermission = async (req, res) => {
         data = JSON.parse(rows[0].config_value);
       } catch (e) { /* 使用默认 */ }
     }
+    // 强制兜底：确保客服角色至少能访问“在线咨询/会话管理”页
+    if (!Array.isArray(data.customerService)) data.customerService = [];
+    if (!data.customerService.includes("/chat-sessions")) data.customerService.push("/chat-sessions");
+    if (!data.customerService.includes("/chat-sessions-manage")) data.customerService.push("/chat-sessions-manage");
+    // 其它角色数组做一下兜底，避免返回结构异常
+    if (!Array.isArray(data.superAdmin)) data.superAdmin = [];
+    if (!Array.isArray(data.operationAdmin)) data.operationAdmin = [];
+    if (!Array.isArray(data.user)) data.user = [];
     res.send({ status: 200, data });
   } catch (err) { res.cc(err); }
 };

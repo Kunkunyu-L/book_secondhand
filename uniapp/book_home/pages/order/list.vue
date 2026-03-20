@@ -27,6 +27,7 @@
           <text class="order-no">订单号：{{ order.order_no }}</text>
           <text class="order-status" :class="'status-' + order.status">{{ statusText(order.status) }}</text>
         </view>
+        <text class="order-time">下单时间：{{ formatTime(order.created_at) }}</text>
 
         <!-- 商品列表 -->
         <view class="order-goods" v-for="item in (order.items || [])" :key="item.book_id">
@@ -62,6 +63,7 @@
 import { ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import request from '@/untils/request.js'
+import { formatTime } from '@/untils/formatTime.js'
 
 const tabs = ref([
   { label: '全部', value: 'all', count: 0 },
@@ -221,6 +223,12 @@ const loadMore = () => {}
   align-items: center;
   padding-bottom: 16rpx;
   border-bottom: 1rpx solid #f0f0f0;
+}
+.order-time {
+  display: block;
+  font-size: 22rpx;
+  color: #999;
+  padding-top: 12rpx;
 }
 .order-no {
   font-size: 24rpx;

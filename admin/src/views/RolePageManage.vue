@@ -33,6 +33,7 @@ const ALL_PAGES = [
   { path: '/banners', title: '轮播图管理' },
   { path: '/discover-posts', title: '帖子管理' },
   { path: '/chat-sessions', title: '在线咨询' },
+  { path: '/chat-sessions-manage', title: '会话管理' },
   { path: '/tickets', title: '咨询工单' },
   { path: '/faq-manage', title: '常见问题库' },
   { path: '/system-config', title: '全局设置' },

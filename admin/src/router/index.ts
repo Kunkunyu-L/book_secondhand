@@ -29,7 +29,8 @@ const router = createRouter({
         { path: 'announcements', name: 'Announcements', component: () => import('../views/AnnouncementManage.vue'), meta: { title: '公告管理' } },
         { path: 'banners', name: 'Banners', component: () => import('../views/BannerManage.vue'), meta: { title: '轮播图管理' } },
         // 客服管理
-        { path: 'chat-sessions', name: 'ChatSessions', component: () => import('../views/ChatSessionManage.vue'), meta: { title: '在线咨询' } },
+        { path: 'chat-sessions', name: 'ChatSessions', component: () => import('../views/CustomerChatPage.vue'), meta: { title: '在线咨询' } },
+        { path: 'chat-sessions-manage', name: 'ChatSessionsManage', component: () => import('../views/ChatSessionManage.vue'), meta: { title: '会话管理' } },
         { path: 'tickets', name: 'Tickets', component: () => import('../views/TicketManage.vue'), meta: { title: '咨询工单' } },
         { path: 'faq-manage', name: 'FaqManage', component: () => import('../views/FaqManage.vue'), meta: { title: '常见问题库' } },
         // 系统设置

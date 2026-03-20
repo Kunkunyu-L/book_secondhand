@@ -12,6 +12,31 @@ const messages = ref<any[]>([])
 const inputText = ref('')
 const messagesContainer = ref<HTMLElement | null>(null)
 let socket: Socket | null = null
+const myUserId = ref<string | null>(null)
+
+const decodeTokenPayload = (token: string) => {
+  try {
+    const raw = token.replace(/^Bearer\s+/i, '').trim()
+    const parts = raw.split('.')
+    if (parts.length < 2) return null
+    const payload = parts[1]!
+    const base64UrlToBase64 = (s: string) => {
+      const b64 = s.replace(/-/g, '+').replace(/_/g, '/')
+      const pad = b64.length % 4
+      return pad ? `${b64}${'='.repeat(4 - pad)}` : b64
+    }
+    const json = atob(base64UrlToBase64(payload))
+    return JSON.parse(json)
+  } catch {
+    return null
+  }
+}
+
+const isMine = (m: any) => {
+  // 首选：用 sender_id 对比当前管理员 id，避免 sender_role 数据异常导致左右错位
+  if (myUserId.value != null) return String(m?.sender_id) === String(myUserId.value)
+  return ['admin', 'service'].includes(m?.sender_role)
+}
 
 const loadSessions = async () => {
   try {
@@ -24,7 +49,8 @@ const selectSession = async (s: any) => {
   currentSession.value = s
   try {
     const res: any = await getChatMessagesApi({ session_id: s.id, pageSize: 50 })
-    if (res.status === 200) messages.value = res.data.list || []
+    // 服务端按 DESC 返回（最新在前），直接反转为旧->新
+    if (res.status === 200) messages.value = (res.data.list || []).slice().reverse()
   } catch { messages.value = [] }
   // 标记已读
   socket?.emit('mark_read', { session_id: s.id })
@@ -55,12 +81,30 @@ const scrollToBottom = () => {
   }
 }
 
+const refreshCurrentSessionMessages = async () => {
+  if (!currentSession.value) return
+  try {
+    const res: any = await getChatMessagesApi({ session_id: currentSession.value.id, pageSize: 50 })
+    if (res?.status === 200) {
+      // 服务端按 DESC 返回（最新在前），转成旧->新
+      messages.value = (res.data.list || []).slice().reverse()
+    }
+  } catch {
+    // ignore
+  }
+  await nextTick()
+  scrollToBottom()
+  socket?.emit('mark_read', { session_id: currentSession.value.id })
+}
+
 const handleNewMessage = (msg: any) => {
   // 如果是当前会话的消息，直接追加
-  if (currentSession.value && msg.session_id === currentSession.value.id) {
-    messages.value.push(msg)
-    nextTick(scrollToBottom)
-    socket?.emit('mark_read', { session_id: msg.session_id })
+  if (currentSession.value && String(msg?.session_id) === String(currentSession.value.id)) {
+    // socket 推送缺少 sender_name 字段时会导致顶部显示 sender_role（例如 admin）
+    // 这里改为拉取一次 REST 消息，使用 JOIN 拿到正确昵称，并滚动到最新
+    refreshCurrentSessionMessages()
+  } else {
+    // 非当前会话只更新未读/会话列表
   }
   // 更新会话列表
   loadSessions()
@@ -72,6 +116,13 @@ const toggleChat = () => {
 }
 
 onMounted(() => {
+  // 解析 admin_token，确定“我”的 userId（用于左右对齐判定）
+  const token = localStorage.getItem('admin_token') || ''
+  if (token) {
+    const payload = decodeTokenPayload(token)
+    if (payload?.id != null) myUserId.value = String(payload.id)
+  }
+
   socket = connectSocket()
   if (socket) {
     socket.on('new_message', handleNewMessage)
@@ -125,11 +176,11 @@ watch(visible, (v) => { if (v) loadSessions() })
         <div class="message-area">
           <template v-if="currentSession">
             <div class="messages" ref="messagesContainer">
-              <div v-for="m in messages" :key="m.id" class="msg-row" :class="{ mine: m.sender_role !== 'user' }">
-                <div class="msg-bubble" :class="{ 'bubble-mine': m.sender_role !== 'user' }">
+              <div v-for="m in messages" :key="m.id" class="msg-row" :class="{ mine: isMine(m) }">
+                <div class="msg-bubble" :class="{ 'bubble-mine': isMine(m) }">
                   <div class="msg-sender">{{ m.sender_name || m.sender_role }}</div>
                   <div>{{ m.content }}</div>
-                  <div class="msg-time">{{ m.created_at?.slice(11, 16) }}</div>
+                  <div class="msg-time">{{ (m.created_at || m.updated_at)?.slice(11, 16) }}</div>
                 </div>
               </div>
             </div>
@@ -235,8 +286,9 @@ watch(visible, (v) => { if (v) loadSessions() })
 
 .message-area { flex: 1; display: flex; flex-direction: column; }
 .messages { flex: 1; overflow-y: auto; padding: 12px; }
-.msg-row { margin-bottom: 10px; }
-.msg-row.mine { text-align: right; }
+.msg-row { margin-bottom: 10px; display: flex; }
+.msg-row.mine { justify-content: flex-end; }
+.msg-row:not(.mine) { justify-content: flex-start; }
 .msg-bubble {
   display: inline-block;
   padding: 8px 12px;
@@ -247,9 +299,11 @@ watch(visible, (v) => { if (v) loadSessions() })
   font-size: 13px;
   word-break: break-all;
 }
-.bubble-mine { background: #dbeafe; color: #1e40af; }
+.bubble-mine { background: #dbeafe; color: #1e40af; border-bottom-right-radius: 4px; border-bottom-left-radius: 12px; }
+.msg-row:not(.mine) .msg-bubble { border-bottom-left-radius: 4px; border-bottom-right-radius: 12px; }
 .msg-sender { font-size: 11px; color: #6b7280; margin-bottom: 2px; }
-.msg-time { font-size: 10px; color: #9ca3af; margin-top: 2px; text-align: right; }
+.msg-time { font-size: 10px; color: #9ca3af; margin-top: 2px; text-align: left; }
+.msg-row.mine .msg-time { text-align: right; }
 
 .input-area { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid #e5e7eb; }
 .input-area .el-input { flex: 1; }

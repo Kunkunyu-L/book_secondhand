@@ -19,6 +19,18 @@ exports.getChatSessions = async (req, res) => {
       where += " AND (u.username LIKE ? OR u.nickname LIKE ?)";
       const kw = `%${keyword}%`; params.push(kw, kw);
     }
+    const mode = req.query.mode || "chat"; // chat=在线咨询列表；manage=会话管理列表
+
+    // 可见性规则：
+    // - customerService/operationAdmin：
+    //   - mode=chat：seller 直聊仅当已分配自己（assigned_service=self）才可见
+    //   - mode=manage：会话管理需要能看到未分配的 seller，才能完成分配
+    // - 其它角色（如 superAdmin）：不做 seller assigned_service 过滤
+    const role = req.auth?.role;
+    if ((role === "customerService" || role === "operationAdmin") && mode === "chat") {
+      where += " AND (cs.target_type='service' OR cs.assigned_service=?)";
+      params.push(req.auth.id);
+    }
 
     const countR = await query(`SELECT COUNT(*) as total FROM chat_session cs LEFT JOIN user u ON cs.user_id=u.id ${where}`, params);
     const list = await query(
@@ -67,14 +79,14 @@ exports.getTickets = async (req, res) => {
     const params = [];
     if (ticketStatus && ticketStatus !== "all") { where += " AND t.status=?"; params.push(ticketStatus); }
     if (keyword) {
-      where += " AND (t.title LIKE ? OR t.ticket_no LIKE ? OR u.username LIKE ?)";
-      const kw = `%${keyword}%`; params.push(kw, kw, kw);
+      where += " AND (t.title LIKE ? OR t.ticket_no LIKE ? OR t.order_no LIKE ? OR u.username LIKE ?)";
+      const kw = `%${keyword}%`; params.push(kw, kw, kw, kw);
     }
 
     const countR = await query(`SELECT COUNT(*) as total FROM service_ticket t LEFT JOIN user u ON t.user_id=u.id ${where}`, params);
     const list = await query(
       `SELECT t.*, u.username, u.nickname,
-        au.nickname as assigned_name, ad.nickname as admin_name
+        COALESCE(au.nickname, ad.nickname) as assigned_name, ad.nickname as admin_name
       FROM service_ticket t
       LEFT JOIN user u ON t.user_id=u.id
       LEFT JOIN user au ON t.assigned_to=au.id
@@ -82,7 +94,7 @@ exports.getTickets = async (req, res) => {
       ${where} ORDER BY
         FIELD(t.status, 'pending','processing','resolved','closed'),
         FIELD(t.priority, 'urgent','high','normal','low'),
-        t.created_at DESC LIMIT ? OFFSET ?`,
+        COALESCE(t.created_at, t.updated_at) DESC LIMIT ? OFFSET ?`,
       [...params, pageSize, offset]
     );
     res.send({ status: 200, data: { list, total: countR[0].total, page, pageSize } });
@@ -97,7 +109,9 @@ exports.updateTicket = async (req, res) => {
     const params = [];
     if (status) { updates.push("status=?"); params.push(status); }
     if (reply !== undefined) { updates.push("reply=?"); params.push(reply); }
-    if (assigned_to) { updates.push("assigned_to=?"); params.push(assigned_to); }
+    // 管理端“处理工单”入口通常不会传 assigned_to，这里默认把工单分配给当前处理人
+    if (assigned_to !== undefined) { updates.push("assigned_to=?"); params.push(assigned_to); }
+    else { updates.push("assigned_to=?"); params.push(req.auth.id); }
     if (priority) { updates.push("priority=?"); params.push(priority); }
     updates.push("admin_id=?"); params.push(req.auth.id);
     params.push(id);

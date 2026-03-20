@@ -28,7 +28,11 @@ const loadData = async () => {
   loading.value = true
   try {
     const res: any = await getChatSessionsApi({
-      page: page.value, pageSize: pageSize.value, status: statusFilter.value, keyword: keyword.value,
+      page: page.value,
+      pageSize: pageSize.value,
+      status: statusFilter.value,
+      keyword: keyword.value,
+      mode: 'manage',
     })
     if (res.status === 200) { tableData.value = res.data.list; total.value = res.data.total }
   } finally { loading.value = false }

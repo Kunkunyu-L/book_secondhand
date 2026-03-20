@@ -22,6 +22,9 @@
         <text class="post-time">{{ formatTime(item.create_time) }}</text>
         <text class="post-stats">{{ item.like_count || 0 }} 赞 · {{ item.comment_count || 0 }} 评论</text>
       </view>
+      <view class="post-actions">
+        <button class="delete-btn" @click="confirmDelete(item)">删除</button>
+      </view>
     </view>
     <view class="load-more" v-if="loading">
       <uni-icons type="spinner" size="16" color="#999"></uni-icons>
@@ -56,6 +59,24 @@ export default {
         this.list = [];
       }
       this.loading = false;
+    },
+    confirmDelete(item) {
+      uni.showModal({
+        title: '提示',
+        content: '确定删除该帖子？删除后无法恢复。',
+        confirmColor: '#ff4d4f',
+        success: async (res) => {
+          if (!res.confirm) return;
+          try {
+            await this.deletePost(item);
+          } catch (e) {}
+        }
+      })
+    },
+    async deletePost(item) {
+      await request({ url: '/discover/posts', method: 'DELETE', data: { id: item.id } });
+      this.list = this.list.filter((p) => p.id !== item.id);
+      uni.showToast({ title: '删除成功', icon: 'success' });
     },
     goPublish() {
       uni.navigateTo({ url: '/pages/discover/post-publish' });
@@ -123,6 +144,20 @@ export default {
   justify-content: space-between;
   font-size: 24rpx;
   color: #999;
+}
+.post-actions {
+  margin-top: 16rpx;
+  display: flex;
+  justify-content: flex-end;
+}
+.delete-btn {
+  background: transparent;
+  border: 1px solid #ff4d4f;
+  color: #ff4d4f;
+  padding: 6rpx 24rpx;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
 }
 .load-more {
   display: flex;

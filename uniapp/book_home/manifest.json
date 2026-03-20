@@ -7,7 +7,7 @@
     "transformPx" : false,
 	"h5": {
 	    "router": {
-	      "mode": "history",  // 路由模式：history（去掉#）
+	      "mode": "hash",  // 路由模式：hash（避免静态站点刷新404）
 	      "base": "/"         // 基础路径，默认根目录
 	    }
 	},

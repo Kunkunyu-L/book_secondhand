@@ -67,34 +67,69 @@ exports.getMyRefunds = (req, res) => {
 
 // ==================== 咨询工单 ====================
 
-// 用户创建工单（表结构无 related_order_id 时仅写入已有字段）
+// 用户创建工单（支持可选关联订单：related_order_id -> orders.order_no）
 exports.createTicket = async (req, res) => {
   const userId = req.auth.id;
-  const { title, content } = req.body;
+  const { title, content, related_order_id, ticket_no } = req.body;
   if (!title || !content) return res.cc("请填写工单标题和内容", 400);
 
-  const sql = "INSERT INTO service_ticket (user_id, type, title, content, status, priority) VALUES (?, 'consultation', ?, ?, 'pending', 'normal')";
-  db.query(sql, [userId, title.trim(), content.trim()], async (err, result) => {
-    if (err) return res.cc(err);
+  const generateTicketNo = () => {
+    // 30位以内：时间戳 + 随机数（避免重复）
+    const t = Date.now().toString(36).toUpperCase();
+    const r = Math.random().toString(36).slice(2, 8).toUpperCase();
+    return `T${t}${r}`.slice(0, 30);
+  };
 
-    // 写入管理员通知记录
-    try {
-      const notifSql = "INSERT INTO notification (user_id, title, content, type) VALUES (0, ?, ?, 'ticket')";
-      db.query(notifSql, [`新咨询工单：${title.trim()}`, `用户提交了一个新工单，请及时处理`], () => {});
-    } catch (_) {}
+  const ticketNoToUse = ticket_no ? String(ticket_no).trim().slice(0, 30) : generateTicketNo();
+  const orderId = related_order_id ? Number(related_order_id) : null;
+  const orderIdToUse = orderId && orderId > 0 ? orderId : null;
 
-    // 实时推送给管理员
-    const io = req.app.get("io");
-    if (io) {
-      io.to("admin_room").emit("new_ticket", {
-        title: `新咨询工单：${title.trim()}`,
-        content: `用户提交了一个新工单，请及时处理`,
-        type: "ticket",
-      });
-    }
+  const orderNoQuerySql = "SELECT order_no FROM orders WHERE id=? AND user_id=?";
+  const insertSql = "INSERT INTO service_ticket (ticket_no, user_id, type, title, content, status, priority, order_id, order_no, created_at) VALUES (?, ?, 'consultation', ?, ?, 'pending', 'normal', ?, ?, NOW())";
 
-    res.send({ status: 200, message: "工单已创建", data: { id: result.insertId } });
-  });
+  const doInsert = (orderIdForInsert, orderNo) => {
+    db.query(
+      insertSql,
+      [ticketNoToUse, userId, title.trim(), content.trim(), orderIdForInsert, orderNo],
+      (err, result) => {
+        if (err) return res.cc(err);
+
+        // 写入管理员通知记录
+        try {
+          const notifSql = "INSERT INTO notification (user_id, title, content, type) VALUES (0, ?, ?, 'ticket')";
+          const orderPart = orderNo ? `（订单号：${orderNo}）` : '';
+          db.query(
+            notifSql,
+            [`新咨询工单：${ticketNoToUse} ${title.trim()}${orderPart}`, `用户提交了一个新工单：${ticketNoToUse}${orderPart}`],
+            () => {}
+          );
+        } catch (_) {}
+
+        // 实时推送给管理员
+        const io = req.app.get("io");
+        if (io) {
+          const orderPart = orderNo ? `（订单号：${orderNo}）` : '';
+          io.to("admin_room").emit("new_ticket", {
+            title: `新咨询工单：${ticketNoToUse} ${title.trim()}${orderPart}`,
+            content: `用户提交了一个新工单：${ticketNoToUse}${orderPart}`,
+            type: "ticket",
+          });
+        }
+
+        res.send({ status: 200, message: "工单已创建", data: { id: result.insertId, ticket_no: ticketNoToUse } });
+      }
+    );
+  };
+
+  if (orderIdToUse) {
+    db.query(orderNoQuerySql, [orderIdToUse, userId], (err, rows) => {
+      if (err) return res.cc(err);
+      const orderNo = rows && rows[0] ? rows[0].order_no || null : null;
+      doInsert(orderIdToUse, orderNo);
+    });
+  } else {
+    doInsert(null, null);
+  }
 };
 
 // 用户查看自己的工单

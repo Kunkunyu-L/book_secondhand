@@ -158,11 +158,11 @@ onMounted(loadData)
           </el-descriptions-item>
           <el-descriptions-item label="买家">{{ orderDetail.nickname || orderDetail.username }}</el-descriptions-item>
           <el-descriptions-item label="金额"><span style="color:#F56C6C;font-weight:600">{{ Number(orderDetail.total_amount).toFixed(2) }} 元</span></el-descriptions-item>
-          <el-descriptions-item label="下单时间">{{ orderDetail.created_at }}</el-descriptions-item>
+          <el-descriptions-item label="下单时间">{{ formatTime(orderDetail.created_at) }}</el-descriptions-item>
           <el-descriptions-item label="备注">{{ orderDetail.remark || '无' }}</el-descriptions-item>
           <el-descriptions-item label="收货地址" :span="2">{{ formatAddress(orderDetail.address_snapshot) }}</el-descriptions-item>
-          <el-descriptions-item v-if="orderDetail.pay_time" label="付款时间">{{ orderDetail.pay_time }}</el-descriptions-item>
-          <el-descriptions-item v-if="orderDetail.ship_time" label="发货时间">{{ orderDetail.ship_time }}</el-descriptions-item>
+          <el-descriptions-item v-if="orderDetail.pay_time" label="付款时间">{{ formatTime(orderDetail.pay_time) }}</el-descriptions-item>
+          <el-descriptions-item v-if="orderDetail.ship_time" label="发货时间">{{ formatTime(orderDetail.ship_time) }}</el-descriptions-item>
         </el-descriptions>
         <h4 style="margin:16px 0 8px;color:#303133">商品明细</h4>
         <el-table :data="orderDetail.items" border size="small">

@@ -4,6 +4,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { getUserBooksApi, updateUserBookStatusApi, getCategoriesApi } from '../api'
 import { exportToCSV } from '../utils/export'
 import { getImageUrl } from '../utils/image'
+import { formatTime } from '../utils/formatTime'
 
 const tableData = ref<any[]>([])
 const total = ref(0)
@@ -115,7 +116,9 @@ onMounted(() => { loadData(); loadCategories() })
           <el-tag :type="(statusMap[row.status]?.type || '') as any" size="small">{{ statusMap[row.status]?.text || row.status }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="create_datetime" label="发布时间" width="160" />
+      <el-table-column label="发布时间" width="160">
+        <template #default="{ row }">{{ formatTime(row.create_datetime) }}</template>
+      </el-table-column>
       <el-table-column label="操作" width="180" fixed="right" align="center">
         <template #default="{ row }">
           <el-dropdown v-if="row.status !== 'sold'" trigger="click" @command="(cmd: string) => handleStatusChange(row, cmd)">
