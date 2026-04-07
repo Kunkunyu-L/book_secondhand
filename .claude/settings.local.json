@@ -2,7 +2,23 @@
   "permissions": {
     "allow": [
       "Bash(del:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(grep:*)",
+      "Bash(cd:*)",
+      "Bash(mv Login.vue auth/)",
+      "Bash(mv Layout.vue layout/)",
+      "Bash(mv Dashboard.vue dashboard/)",
+      "Bash(mv CategoryManage.vue PlatformBookManage.vue UserBookManage.vue BookAudit.vue books/)",
+      "Bash(mv OrderManage.vue RefundManage.vue OrderStats.vue orders/)",
+      "Bash(mv formatTime.ts format/)",
+      "Bash(mv upload.ts network/)",
+      "Bash(mv socket.ts network/)",
+      "Bash(mv image.ts helpers/)",
+      "Bash(mv notificationSound.ts helpers/)",
+      "Bash(mv auth.ts modules/)",
+      "Bash(mv permission.ts modules/)",
+      "Bash(npx vite:*)"
     ]
   }
 }

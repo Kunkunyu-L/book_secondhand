@@ -62,6 +62,10 @@
         <text class="form-label">成色描述</text>
         <input class="form-input" v-model="form.condition_desc" placeholder="如：首页有轻微折痕" />
       </view>
+      <view class="form-item">
+        <text class="form-label">库存数量</text>
+        <input class="form-input" v-model="form.stock" placeholder="库存数量" type="number" />
+      </view>
     </view>
 
     <view class="form-card">
@@ -95,23 +99,18 @@ import { onLoad } from '@dcloudio/uni-app'
 import request from '@/untils/request.js'
 import { getImageUrl } from '@/untils/config.js'
 import { uploadImage } from '@/untils/upload.js'
+import { CONDITION_LEVELS } from '@/constants/index.js'
 
 const categories = ref([])
 const publishing = ref(false)
 const editId = ref(null)
-const editBookType = ref('user') // user | platform
-
-const conditionOptions = [
-  { label: '全新', value: 10 },
-  { label: '九成新', value: 9 },
-  { label: '八成新', value: 8 },
-  { label: '七成新', value: 7 }
-]
+const editBookType = ref('user')
+const conditionOptions = CONDITION_LEVELS
 
 const form = ref({
   title: '', author: '', isbn: '', publisher: '', publish_date: '',
   category: null, tags: '', price: '', original_price: '',
-  condition: 8, condition_desc: '', cover_img: '', book_story: ''
+  condition: 8, condition_desc: '', stock: 1, cover_img: '', book_story: ''
 })
 
 const selectedCategoryName = computed(() => {
@@ -152,6 +151,7 @@ const loadBookDetail = async (id, type) => {
       original_price: d.original_price != null ? String(d.original_price) : '',
       condition: d.condition ?? 8,
       condition_desc: d.condition_desc || '',
+      stock: d.stock ?? 1,
       cover_img: d.cover_img || '',
       book_story: (d.book_story || d.description) || ''
     }
@@ -191,7 +191,8 @@ const submitPublish = async () => {
   const payload = {
     ...form.value,
     price: Number(form.value.price),
-    original_price: Number(form.value.original_price) || Number(form.value.price)
+    original_price: Number(form.value.original_price) || Number(form.value.price),
+    stock: Number(form.value.stock) || 1
   }
   try {
     if (editId.value) {

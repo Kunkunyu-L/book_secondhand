@@ -148,35 +148,7 @@
 <script>
 import request from '@/untils/request.js';
 import { getImageUrl } from '@/untils/config.js';
-
-// 分类与专业关键词映射（智能推荐辅助）
-const MAJOR_KEYWORDS = {
-  '计算机': ['计算机', '编程', 'Python', 'Java', '数据结构', '算法', '软件'],
-  '软件工程': ['计算机', '编程', '软件', '架构', '数据库'],
-  '数学': ['数学', '高等数学', '线性代数', '概率论', '数学分析'],
-  '物理': ['物理', '力学', '电磁', '量子', '热力学'],
-  '化学': ['化学', '有机化学', '无机化学', '分析化学'],
-  '经济': ['经济', '微观经济', '宏观经济', '金融', '会计'],
-  '金融': ['金融', '投资', '财务', '会计', '经济'],
-  '中文': ['文学', '汉语', '写作', '古典', '诗词'],
-  '历史': ['历史', '中国史', '世界史', '文明'],
-  '英语': ['英语', '英文', '口语', 'IELTS', 'TOEFL'],
-  '医学': ['医学', '解剖', '药理', '临床', '生理'],
-  '法学': ['法律', '民法', '刑法', '宪法', '诉讼'],
-  '教育': ['教育', '心理', '教学', '课程'],
-  '艺术': ['艺术', '设计', '美术', '绘画'],
-};
-
-function getRecommendScore(book, major) {
-  if (!major) return 0;
-  const keywords = MAJOR_KEYWORDS[major] || [major];
-  const target = `${book.title || ''} ${book.author || ''} ${book.tags || ''} ${book.category_name || ''}`.toLowerCase();
-  let score = 0;
-  for (const kw of keywords) {
-    if (target.includes(kw.toLowerCase())) score += 1;
-  }
-  return score;
-}
+import { getRecommendScore, getConditionText } from '@/constants/index.js';
 
 export default {
   data() {
@@ -211,6 +183,7 @@ export default {
   },
   methods: {
     getImageUrl,
+    getConditionText,
     onScroll(e) {
       const scrollY = e.detail.scrollTop;
       // 粘性：轮播图高度约 360rpx ≈ 180px（按 750rpx=375px 比例）
@@ -273,14 +246,6 @@ export default {
           uni.switchTab({ url: item.link_url }).catch(() => {});
         });
       }
-    },
-    getConditionText(condition) {
-      if (!condition) return '';
-      if (condition >= 10) return '全新';
-      if (condition >= 9) return '九成新';
-      if (condition >= 8) return '八成新';
-      if (condition >= 7) return '七成新';
-      return '六成以下';
     },
     detailBtn(bookId, bookType) {
       uni.navigateTo({
@@ -455,75 +420,75 @@ export default {
   background: #f5f6f8;
 }
 .book-card {
-  width: calc(50% - 10px);
-  margin: 5px;
+  width: calc(50% - 10rpx);
+  margin: 10rpx 5rpx;
   background: #fff;
-  border-radius: 10px;
+  border-radius: 16rpx;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
 }
 .book-img-wrap {
   position: relative;
   width: 100%;
-  height: 180px;
+  height: 360rpx;
   overflow: hidden;
 }
 .book-img { width: 100%; height: 100%; object-fit: cover; }
 .tag-condition {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 16rpx;
+  left: 16rpx;
   background: rgba(0,0,0,0.55);
   color: #fff;
-  font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 4px;
+  font-size: 22rpx;
+  padding: 6rpx 12rpx;
+  border-radius: 8rpx;
 }
 .tag-official {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 16rpx;
+  right: 16rpx;
   background: #1f2937;
   color: #fff;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
+  font-size: 20rpx;
+  padding: 6rpx 12rpx;
+  border-radius: 8rpx;
 }
-.book-info { padding: 10px; }
+.book-info { padding: 20rpx; }
 .book-title {
-  font-size: 14px;
+  font-size: 28rpx;
   font-weight: 500;
   color: #1f2937;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin-bottom: 4px;
+  margin-bottom: 8rpx;
 }
 .book-author {
-  font-size: 12px;
+  font-size: 24rpx;
   color: #9ca3af;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-bottom: 8px;
+  margin-bottom: 16rpx;
 }
 .book-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.seller-row { display: flex; align-items: center; gap: 5px; }
-.seller-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
+.seller-row { display: flex; align-items: center; gap: 10rpx; }
+.seller-avatar { width: 44rpx; height: 44rpx; border-radius: 50%; object-fit: cover; }
 .seller-name {
-  font-size: 11px;
+  font-size: 22rpx;
   color: #6b7280;
-  max-width: 80px;
+  max-width: 160rpx;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.book-price { font-size: 15px; font-weight: 600; color: #dc2626; }
+.book-price { font-size: 30rpx; font-weight: 600; color: #dc2626; }
 
 /* 空状态 */
 .empty {
@@ -539,8 +504,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px 0;
+  padding: 40rpx 0;
   color: #9ca3af;
 }
-.load-text { font-size: 13px; margin-left: 8px; }
+.load-text { font-size: 26rpx; margin-left: 16rpx; }
 </style>

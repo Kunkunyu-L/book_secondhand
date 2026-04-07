@@ -5,6 +5,10 @@
         <text class="setting-label">关于我们</text>
         <text class="setting-value">二手书交易平台 v1.0.0</text>
       </view>
+      <view class="setting-item" @click="goToChangelog">
+        <text class="setting-label">更新日志</text>
+        <uni-icons type="right" size="16" color="#ccc"></uni-icons>
+      </view>
       <view class="setting-item" @click="clearCache">
         <text class="setting-label">清除缓存</text>
         <uni-icons type="right" size="16" color="#ccc"></uni-icons>
@@ -17,6 +21,10 @@
 
 <script setup>
 import request from '@/untils/request.js'
+
+const goToChangelog = () => {
+  uni.navigateTo({ url: '/pages/changelog/changelog' })
+}
 
 const clearCache = () => {
   uni.showModal({

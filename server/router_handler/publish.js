@@ -3,7 +3,7 @@ const db = require("../db/config");
 // 发布图书
 exports.publishBook = (req, res) => {
   const userId = req.auth.id;
-  const { isbn, title, author, publisher, publish_date, category, tags, cover_img, detail_imgs, book_story, condition, condition_desc, original_price, price } = req.body;
+  const { isbn, title, author, publisher, publish_date, category, tags, cover_img, detail_imgs, book_story, condition, condition_desc, original_price, price, stock } = req.body;
 
   if (!title || !author || !price) return res.cc("请填写必要信息（书名、作者、价格）", 400);
 
@@ -37,7 +37,7 @@ exports.publishBook = (req, res) => {
       condition_desc: condition_desc || "",
       original_price: original_price || price,
       price: price,
-      stock: 1,
+      stock: stock || 1,
     }, (err2) => {
       if (err2) return res.cc(err2);
       res.send({ status: 200, message: "发布成功", data: { book_id: bookId } });
@@ -53,7 +53,7 @@ exports.getBookDetail = (req, res) => {
   if (!bookId) return res.cc("缺少 book_id", 400);
 
   if (bookType === "platform") {
-    const sql = `SELECT pb.*, pb.description AS book_story, bcp.price, bcp.original_price, bcp.\`condition\`, bcp.condition_desc
+    const sql = `SELECT pb.*, pb.description AS book_story, bcp.price, bcp.original_price, bcp.\`condition\`, bcp.condition_desc, bcp.stock
       FROM platform_book pb
       LEFT JOIN book_condition_price bcp ON pb.id = bcp.book_id AND bcp.type = 'platform'
       WHERE pb.id = ? AND pb.user_id = ?`;
@@ -65,7 +65,7 @@ exports.getBookDetail = (req, res) => {
     return;
   }
 
-  const sql = `SELECT ub.*, bcp.price, bcp.original_price, bcp.\`condition\`, bcp.condition_desc
+  const sql = `SELECT ub.*, bcp.price, bcp.original_price, bcp.\`condition\`, bcp.condition_desc, bcp.stock
     FROM user_book ub
     LEFT JOIN book_condition_price bcp ON ub.id = bcp.book_id AND bcp.type = 'user'
     WHERE ub.id = ? AND ub.user_id = ?`;
@@ -79,7 +79,7 @@ exports.getBookDetail = (req, res) => {
 // 更新图书（编辑，支持 user/platform，仅本人）
 exports.updateBook = (req, res) => {
   const userId = req.auth.id;
-  const { book_id, book_type, isbn, title, author, publisher, publish_date, category, tags, cover_img, detail_imgs, book_story, description, condition, condition_desc, original_price, price } = req.body;
+  const { book_id, book_type, isbn, title, author, publisher, publish_date, category, tags, cover_img, detail_imgs, book_story, description, condition, condition_desc, original_price, price, stock } = req.body;
   const type = (book_type || "user") === "platform" ? "platform" : "user";
 
   if (!book_id || !title || !author || !price) return res.cc("请填写必要信息（书名、作者、价格）", 400);
@@ -101,7 +101,7 @@ exports.updateBook = (req, res) => {
     db.query("UPDATE platform_book SET ? WHERE id = ? AND user_id = ?", [bookData, book_id, userId], (err, results) => {
       if (err) return res.cc(err);
       if (results.affectedRows === 0) return res.cc("图书不存在", 404);
-      const priceData = { condition: condition || 8, condition_desc: condition_desc || "", original_price: original_price || price, price: price, stock: 1 };
+      const priceData = { condition: condition || 8, condition_desc: condition_desc || "", original_price: original_price || price, price: price, stock: stock || 1 };
       db.query("UPDATE book_condition_price SET ? WHERE book_id = ? AND type = 'platform'", [priceData, book_id], (err2) => {
         if (err2) return res.cc(err2);
         res.send({ status: 200, message: "更新成功", data: { book_id } });
@@ -126,7 +126,7 @@ exports.updateBook = (req, res) => {
   db.query("UPDATE user_book SET ? WHERE id = ? AND user_id = ?", [bookData, book_id, userId], (err, results) => {
     if (err) return res.cc(err);
     if (results.affectedRows === 0) return res.cc("图书不存在", 404);
-    const priceData = { condition: condition || 8, condition_desc: condition_desc || "", original_price: original_price || price, price: price, stock: 1 };
+    const priceData = { condition: condition || 8, condition_desc: condition_desc || "", original_price: original_price || price, price: price, stock: stock || 1 };
     db.query("UPDATE book_condition_price SET ? WHERE book_id = ? AND type = 'user'", [priceData, book_id], (err2) => {
       if (err2) return res.cc(err2);
       res.send({ status: 200, message: "更新成功", data: { book_id } });

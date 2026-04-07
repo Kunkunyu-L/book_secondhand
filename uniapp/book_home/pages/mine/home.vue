@@ -124,6 +124,13 @@
 
       <!-- 设置 -->
       <view class="menu-group">
+        <view class="menu-item" @click="goTo('/pages/changelog/changelog')">
+          <view class="menu-icon">
+            <uni-icons type="info" size="22" color="#667eea"></uni-icons>
+          </view>
+          <view class="menu-text">更新日志</view>
+          <uni-icons type="right" size="16" color="#ccc"></uni-icons>
+        </view>
         <view class="menu-item" @click="goToSetting">
           <view class="menu-icon">
             <uni-icons type="gear" size="22" color="#666"></uni-icons>
@@ -287,16 +294,16 @@ const showLogoutModal = () => {
 .user-header {
   display: flex;
   align-items: center;
-  padding: 30rpx 20rpx;
+  padding: 30rpx 24rpx;
   background-color: #fff;
-  border-bottom: 1px solid #eee;
+  border-bottom: 2rpx solid #eee;
 }
 .user-avatar {
   width: 120rpx;
   height: 120rpx;
   border-radius: 50%;
   overflow: hidden;
-  margin-right: 20rpx;
+  margin-right: 24rpx;
 }
 .user-avatar image {
   width: 100%;
@@ -363,7 +370,7 @@ const showLogoutModal = () => {
   display: flex;
   align-items: center;
   padding: 24rpx 20rpx;
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: 2rpx solid #f5f5f5;
 }
 .menu-item:last-child {
   border-bottom: none;
@@ -380,7 +387,7 @@ const showLogoutModal = () => {
   background: #F56C6C;
   color: #fff;
   font-size: 20rpx;
-  padding: 2rpx 10rpx;
+  padding: 4rpx 12rpx;
   border-radius: 20rpx;
   margin-right: 8rpx;
 }

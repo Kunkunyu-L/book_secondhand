@@ -32,160 +32,172 @@
 	},
     {
         "path": "pages/mine/home",
-        "style": { 
-		 "navigationBarTitleText": "我的"
+        "style": {
+			"navigationBarTitleText": "我的"
 		}
     },
 	{
 	    "path": "pages/auth/login",
-	    "style": { 
-		 "navigationBarTitleText": "登录"
+	    "style": {
+			"navigationBarTitleText": "登录"
 		}
 	},
 	{
 	    "path": "pages/auth/register",
-	    "style": { 
-		 "navigationBarTitleText": "注册"
+	    "style": {
+			"navigationBarTitleText": "注册"
 		}
 	},
 	{
 	    "path": "components/detail",
-	    "style": { 
-		 "navigationBarTitleText": "商品详情",
-		 "navigationStyle": "custom",
-		 "enablePullDownRefresh": false
+	    "style": {
+			"navigationBarTitleText": "商品详情",
+			"navigationStyle": "custom",
+			"enablePullDownRefresh": false
 		}
 	},
 	{
 	    "path": "pages/order/confirm",
-	    "style": { 
-		 "navigationBarTitleText": "确认订单"
+	    "style": {
+			"navigationBarTitleText": "确认订单"
 		}
 	},
 	{
 	    "path": "pages/order/list",
-	    "style": { 
-		 "navigationBarTitleText": "我的订单"
+	    "style": {
+			"navigationBarTitleText": "我的订单"
 		}
 	},
 	{
 	    "path": "pages/order/detail",
-	    "style": { 
-		 "navigationBarTitleText": "订单详情"
+	    "style": {
+			"navigationBarTitleText": "订单详情"
 		}
 	},
 	{
 	    "path": "pages/address/address",
-	    "style": { 
-		 "navigationBarTitleText": "收货地址"
+	    "style": {
+			"navigationBarTitleText": "收货地址"
 		}
 	},
 	{
 	    "path": "pages/profile/edit",
-	    "style": { 
-		 "navigationBarTitleText": "编辑资料"
+	    "style": {
+			"navigationBarTitleText": "编辑资料"
 		}
 	},
 	{
 	    "path": "pages/collection/collection",
-	    "style": { 
-		 "navigationBarTitleText": "我的收藏"
+	    "style": {
+			"navigationBarTitleText": "我的收藏"
 		}
 	},
 	{
 	    "path": "pages/setting/setting",
-	    "style": { 
-		 "navigationBarTitleText": "设置"
+	    "style": {
+			"navigationBarTitleText": "设置"
 		}
 	},
 	{
 	    "path": "pages/publish/publish",
-	    "style": { 
-		 "navigationBarTitleText": "发布图书"
+	    "style": {
+			"navigationBarTitleText": "发布图书"
 		}
 	},
 	{
 	    "path": "pages/publish/mybooks",
-	    "style": { 
-		 "navigationBarTitleText": "我发布的闲置"
+	    "style": {
+			"navigationBarTitleText": "我发布的闲置"
 		}
 	},
 	{
 	    "path": "pages/discover/my-posts",
-	    "style": { 
-		 "navigationBarTitleText": "我发布的帖子"
+	    "style": {
+			"navigationBarTitleText": "我发布的帖子"
 		}
 	},
 	{
 	    "path": "pages/discover/post-publish",
 	    "style": {
-		 "navigationBarTitleText": "发布帖子"
+			"navigationBarTitleText": "发布帖子"
 		}
 	},
 	{
 	    "path": "pages/discover/post-detail",
 	    "style": {
-		 "navigationBarTitleText": "帖子详情"
+			"navigationBarTitleText": "帖子详情"
 		}
 	},
 	{
 	    "path": "pages/chat/sessions",
-	    "style": { 
-		 "navigationBarTitleText": "消息"
+	    "style": {
+			"navigationBarTitleText": "消息"
 		}
 	},
 	{
 	    "path": "pages/chat/chat",
-	    "style": { 
-		 "navigationBarTitleText": "聊天"
+	    "style": {
+			"navigationBarTitleText": "聊天"
 		}
 	},
 	{
 	    "path": "pages/ticket/submit",
-	    "style": { 
-		 "navigationBarTitleText": "提交工单"
+	    "style": {
+			"navigationBarTitleText": "提交工单"
 		}
 	},
 	{
 	    "path": "pages/coupon/list",
-	    "style": { 
-		 "navigationBarTitleText": "优惠券"
+	    "style": {
+			"navigationBarTitleText": "优惠券"
 		}
 	},
 	{
 	    "path": "pages/refund/apply",
-	    "style": { 
-		 "navigationBarTitleText": "申请退款"
+	    "style": {
+			"navigationBarTitleText": "申请退款"
 		}
 	},
 	{
 	    "path": "pages/faq/faq",
-	    "style": { 
-		 "navigationBarTitleText": "常见问题"
+	    "style": {
+			"navigationBarTitleText": "常见问题"
 		}
 	},
 	{
 	    "path": "pages/notifications/notices",
-	    "style": { 
-		 "navigationBarTitleText": "通知公告"
+	    "style": {
+			"navigationBarTitleText": "通知公告"
 		}
 	},
 	{
 	    "path": "pages/notifications/system-messages",
-	    "style": { 
-		 "navigationBarTitleText": "系统通知"
+	    "style": {
+			"navigationBarTitleText": "系统通知"
 		}
 	},
 	{
 	    "path": "pages/mine/withdraw",
-	    "style": { 
-		 "navigationBarTitleText": "余额与提现"
+	    "style": {
+			"navigationBarTitleText": "余额与提现"
+		}
+	},
+	{
+	    "path": "pages/changelog/changelog",
+	    "style": {
+			"navigationBarTitleText": "更新日志"
+		}
+	},
+	{
+		"path": "pages/error/404",
+		"style": {
+			"navigationBarTitleText": "页面不存在"
 		}
 	}
   ],
   "tabBar": {
-    "color": "#bfbfbf", 
-    "selectedColor": "#2c2c2c", 
+    "color": "#bfbfbf",
+    "selectedColor": "#2c2c2c",
 	"backgroundColor": "#ffffff",
 	"height": "50px",
     "list": [
