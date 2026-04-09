@@ -1,4 +1,5 @@
 const db = require("../db/config");
+const recommendationService = require("../services/recommendationService");
 
 const query = (sql, params = []) =>
   new Promise((resolve, reject) => {
@@ -87,94 +88,71 @@ exports.getBookUserInfo = (req, res) => {
   });
 };
 
-exports.getBookMarketInfo = (req, res) => {
-  // 多表联查 SQL + 随机排序
-  const sql = `
-    (
-      SELECT 
-        ub.id,
-        ub.user_id,
-        ub.isbn,
-        ub.title,
-        ub.author,
-        ub.publisher,
-        ub.publish_date,
-        ub.category,
-        ub.tags,
-        ub.status,
-        ub.cover_img,
-        ub.detail_imgs,
-        ub.book_story,
-        ub.nope,
-        ub.create_datetime,
-        ub.update_datetime,
-        NULL AS description,
-        NULL AS sales_count,
-        bcp.id AS bcp_id,
-        bcp.type AS bcp_type,
-        bcp.book_id AS bcp_book_id,
-        bcp.condition AS bcp_condition,
-        bcp.condition_desc AS bcp_condition_desc,
-        bcp.original_price AS bcp_original_price,
-        bcp.price AS bcp_price,
-        bcp.stock AS bcp_stock,
-        u.nickname,
-        u.avatar,
-        'user' AS source
-      FROM user_book ub
-      LEFT JOIN book_condition_price bcp 
-        ON ub.id = bcp.book_id AND bcp.type = 'user'
-      LEFT JOIN \`user\` u 
-        ON ub.user_id = u.id
-      WHERE ub.status = 'onsale'
-    )
-    UNION ALL
-    (
-      SELECT 
-        pb.id,
-        pb.user_id,
-        pb.isbn,
-        pb.title,
-        pb.author,
-        pb.publisher,
-        pb.publish_date,
-        pb.category,
-        pb.tags,
-        pb.status,
-        pb.cover_img,
-        pb.detail_imgs,
-        NULL AS book_story, 
-        NULL AS nope,
-        pb.create_datetime,
-        pb.update_datetime,
-        pb.description,
-        pb.sales_count,
-        bcp.id AS bcp_id,
-        bcp.type AS bcp_type,
-        bcp.book_id AS bcp_book_id,
-        bcp.condition AS bcp_condition,
-        bcp.condition_desc AS bcp_condition_desc,
-        bcp.original_price AS bcp_original_price,
-        bcp.price AS bcp_price,
-        bcp.stock AS bcp_stock,
-        NULL AS nickname,
-        NULL AS avatar,
-        'platform' AS source
-      FROM platform_book pb
-      LEFT JOIN book_condition_price bcp 
-        ON pb.id = bcp.book_id AND bcp.type = 'platform'
-      WHERE pb.status = 'onsale'
-    )
-    ORDER BY RAND();
-  `;
-  db.query(sql, (err, results) => {
-    if (err) return res.cc(err);
+/**
+ * 获取书市内容（支持智能推荐）
+ * 登录用户：基于专业的个性化推荐
+ * 未登录用户：随机排序
+ */
+exports.getBookMarketInfo = async (req, res) => {
+  try {
+    // 检查是否有登录用户
+    const userId = req.user?.id; // 从JWT中获取用户ID
+
+    let results;
+
+    if (userId) {
+      // 已登录：使用智能推荐算法
+      results = await recommendationService.getPersonalizedRecommendations(userId, 100);
+      console.log(`用户 ${userId} 获取个性化推荐，共 ${results.length} 本书`);
+    } else {
+      // 未登录：获取所有图书并随机排序
+      results = await recommendationService.getAllOnSaleBooks();
+      // 简单的随机打乱
+      results.sort(() => Math.random() - 0.5);
+    }
+
     res.send({
       status: 200,
-      message: "获取书市内容成功！",
+      message: userId ? "获取智能推荐成功！" : "获取书市内容成功！",
       data: results,
     });
-  });
+  } catch (err) {
+    console.error('获取书市内容失败:', err);
+    res.cc(err);
+  }
+};
+
+/**
+ * 智能推荐接口（需登录）
+ * 基于用户专业、图书分类、热度、时间等多维度计算推荐分数
+ * 支持指定返回数量和过滤条件
+ */
+exports.getRecommendations = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const limit = parseInt(req.query.limit) || 20; // 默认返回20本
+
+    if (!userId) {
+      return res.send({
+        status: 401,
+        message: "请先登录后使用推荐功能",
+        data: []
+      });
+    }
+
+    // 获取个性化推荐
+    const recommendations = await recommendationService.getPersonalizedRecommendations(userId, limit);
+
+    res.send({
+      status: 200,
+      message: "获取智能推荐成功！",
+      data: recommendations,
+    });
+
+  } catch (err) {
+    console.error('获取智能推荐失败:', err);
+    res.cc(err);
+  }
 };
 
 exports.getBookDetailInfo = (req, res) => {

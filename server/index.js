@@ -50,9 +50,6 @@ app.use("/my", userInfoRouter);
 //获取首页信息路由（公开）
 const homeRouter = require("./router/home");
 app.use("/home", homeRouter);
-//购物车路由（需认证）
-const cartRouter = require("./router/cart");
-app.use("/cart", cartRouter);
 //订单路由（需认证）
 const orderRouter = require("./router/order");
 app.use("/order", orderRouter);

@@ -19,6 +19,9 @@ router.get("/books/userbook", homeHandler.getBookUserInfo);
 //书市内容，混合显示，随机排序
 router.get("/books/market", homeHandler.getBookMarketInfo);
 
+//智能推荐（需登录，基于用户专业）
+router.get("/books/recommend", homeHandler.getRecommendations);
+
 //商品详情页查询
 router.post("/books/detail", homeHandler.getBookDetailInfo);
 

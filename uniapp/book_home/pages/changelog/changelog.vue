@@ -51,7 +51,7 @@ const changelogs = ref([
       { type: 'new', text: '正式上线二手书交易平台' },
       { type: 'new', text: '图书发布与购买功能' },
       { type: 'new', text: '平台自营与用户闲置双模式' },
-      { type: 'new', text: '购物车与订单管理' },
+      { type: 'new', text: '订单管理' },
       { type: 'new', text: '在线聊天与客服系统' },
       { type: 'new', text: '发现社区功能' },
       { type: 'new', text: '优惠券与余额提现' }

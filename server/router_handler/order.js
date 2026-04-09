@@ -59,14 +59,14 @@ function generateOrderNo() {
   return `${y}${m}${d}${h}${mi}${s}${rand}`;
 }
 
-// 创建订单（从购物车选中项或直接购买）
+// 创建订单（直接购买）
 exports.createOrder = (req, res) => {
   const userId = req.auth.id;
   const { address_id, items, remark, user_coupon_id } = req.body;
-  // items: [{ book_id, book_type, quantity }] 直接购买时传入
-  // 如果没传items，从购物车选中项创建
+  // items: [{ book_id, book_type, quantity }] 必传
 
   if (!address_id) return res.cc("请选择收货地址", 400);
+  if (!items || !items.length) return res.cc("请选择购买商品", 400);
 
   // 先获取地址快照
   db.query("SELECT * FROM address WHERE id=? AND user_id=?", [address_id, userId], (err, addrResults) => {
@@ -181,11 +181,6 @@ exports.createOrder = (req, res) => {
             );
           });
 
-          // 如果是从购物车下单，删除购物车中已购买的项
-          if (!items) {
-            db.query("DELETE FROM cart WHERE user_id=? AND selected=1", [userId]);
-          }
-
           // 通知管理员：新订单（站内通知 + 实时推送）
           const io = req.app.get("io");
           if (io) {
@@ -216,17 +211,8 @@ exports.createOrder = (req, res) => {
       });
     };
 
-    // 判断是直接购买还是从购物车
-    if (items && items.length > 0) {
-      processItems(items);
-    } else {
-      // 从购物车选中项
-      const cartSql = "SELECT book_id, book_type, quantity FROM cart WHERE user_id=? AND selected=1";
-      db.query(cartSql, [userId], (err2, cartResults) => {
-        if (err2) return res.cc(err2);
-        processItems(cartResults);
-      });
-    }
+    // 处理订单商品
+    processItems(items);
   });
 };
 

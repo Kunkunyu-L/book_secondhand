@@ -148,7 +148,7 @@
 <script>
 import request from '@/untils/request.js';
 import { getImageUrl } from '@/untils/config.js';
-import { getRecommendScore, getConditionText } from '@/constants/index.js';
+import { getConditionText } from '@/constants/index.js';
 
 export default {
   data() {
@@ -200,33 +200,34 @@ export default {
           request({ url: '/home/categories', method: 'GET' }).catch(() => ({ data: [] })),
           request({ url: '/home/announcements?type=notice', method: 'GET' }).catch(() => ({ data: [] })),
         ];
+
+        // 如果已登录，同时获取用户信息和智能推荐
         if (token) {
           requests.push(
             request({ url: '/my/getUserInfo', method: 'GET' }).catch(() => ({ data: {} }))
           );
+          // 调用新的智能推荐接口
+          requests.push(
+            request({ url: '/home/books/recommend?limit=12', method: 'GET' }).catch(() => ({ data: [] }))
+          );
         }
+
         const results = await Promise.all(requests);
         this.banners = results[0].data || [];
         this.marketBook = results[1].data || [];
         this.categories = results[2].data || [];
         this.notices = results[3].data || [];
-        if (token && results[4]) {
-          const user = results[4].data || {};
-          if (user.major || user.school) {
-            this.buildRecommended(user.major || '');
-          }
+
+        if (token) {
+          const user = results[4]?.data || {};
+          // 使用后端智能推荐的结果
+          this.recommended = results[5]?.data || [];
+          console.log('智能推荐结果:', this.recommended.length, '本书');
         }
       } catch (err) {
         console.error('数据获取失败:', err);
       }
       this.loading = false;
-    },
-    buildRecommended(major) {
-      const scored = this.marketBook
-        .map(b => ({ ...b, _score: getRecommendScore(b, major) }))
-        .filter(b => b._score > 0)
-        .sort((a, b) => b._score - a._score);
-      this.recommended = scored.slice(0, 12);
     },
     goToNoticeList() {
       uni.navigateTo({ url: '/pages/notifications/notices' });

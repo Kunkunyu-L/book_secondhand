@@ -158,7 +158,7 @@ admin/
 
 - **后端服务**: [`server/`](../server/) - 提供 API 接口、认证、实时聊天等服务
 - **前台应用**: [`uniapp/`](../uniapp/) - UniApp 小程序/H5 客户端
-- **数据库**: 使用 MySQL，表结构详见 [`db_schema.md`](../db_schema.md)
+- **数据库**: 使用 MySQL，表结构详见 [`secondhand.sql`](../secondhand.sql)
 
 ## 常见问题
 
@@ -177,3 +177,10 @@ admin/
 
 - 运行 `npm run build` 查看详细错误信息
 - 检查类型定义是否完整
+
+---
+
+## 📮 联系方式
+
+- 👤 **作者**: LiuHaonan
+- 📧 **Email**: 564644056@qq.com

@@ -10,7 +10,8 @@
 - **GET `/home/categories/level1`**：获取一级图书分类列表。
 - **GET `/home/books/platform`**：平台自营图书列表。
 - **GET `/home/books/userbook`**：用户发布的闲置图书列表。
-- **GET `/home/books/market`**：书市混合列表（平台+用户，随机排序）。
+- **GET `/home/books/market`**：书市混合列表（平台+用户，登录用户智能排序，未登录随机排序）。
+- **GET `/home/books/recommend`**：智能推荐接口（需登录），基于用户专业、图书分类、热度、时间等多维度计算推荐分数，参数 `limit`（可选，默认20）。
 - **POST `/home/books/detail`**：获取图书详情，参数 `bookId`、`bookType`（`user` / `platform`）。
 - **GET `/home/books/search`**：搜索图书，参数 `keyword`、`category`。
 - **GET `/home/banners`**：轮播图列表（启用中的）。
@@ -22,11 +23,6 @@
 - **GET `/home/coupons`**：当前可领取的优惠券列表。
 
 ---
-
-### 二、地区（`/region`，公开）
-
-- **GET `/region/list`**：省份列表。
-- **GET `/region/children`**：下级地区列表，参数 `id`（父级区域 id）。
 
 ---
 
@@ -57,18 +53,7 @@
 
 ---
 
-### 六、购物车（`/cart`）
-
-- **GET `/cart/list`**：购物车列表。
-- **POST `/cart/add`**：加入购物车。
-- **PUT `/cart/update`**：更新购物车数量。
-- **DELETE `/cart/remove`**：删除购物车项。
-- **PUT `/cart/select`**：更新单个条目的选中状态。
-- **PUT `/cart/selectAll`**：全选 / 取消全选。
-
----
-
-### 七、订单（`/order`）
+### 六、订单（`/order`）
 
 - **POST `/order/create`**：创建订单。
 - **GET `/order/list`**：订单列表，可按状态筛选（具体参数见实现）。
@@ -78,7 +63,7 @@
 
 ---
 
-### 八、收藏（`/favorite`）
+### 七、收藏（`/favorite`）
 
 - **GET `/favorite/list`**：收藏列表。
 - **POST `/favorite/add`**：添加收藏。
@@ -87,7 +72,7 @@
 
 ---
 
-### 九、发布 / 我的闲置（`/publish`）
+### 八、发布 / 我的闲置（`/publish`）
 
 - **POST `/publish/book`**：发布图书（用户卖书）。
 - **GET `/publish/book/detail`**：获取单本用户图书（编辑用）。
@@ -98,7 +83,7 @@
 
 ---
 
-### 十、发现 / 帖子（`/discover`）
+### 九、发现 / 帖子（`/discover`）
 
 - **GET `/discover/posts`**：帖子列表（公开）。
 - **GET `/discover/my-posts`**：我发布的帖子（登录）。
@@ -110,7 +95,7 @@
 
 ---
 
-### 十一、聊天（`/chat` + Socket）
+### 十、聊天（`/chat` + Socket）
 
 **REST 部分：**
 
@@ -128,7 +113,7 @@
 
 ---
 
-### 十二、前台客户端其他功能（`/client`）
+### 十一、前台客户端其他功能（`/client`）
 
 - **POST `/client/refund`**：申请退款。
 - **GET `/client/refunds`**：我的退款列表。
@@ -143,7 +128,7 @@
 
 ---
 
-### 十三、管理后台（`/admin`，需要管理员权限）
+### 十二、管理后台（`/admin`，需要管理员权限）
 
 这里只做模块级别概览，具体字段可参考 `server/router/admin.js` 与对应的 `router_handler`：
 
