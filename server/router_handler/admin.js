@@ -385,12 +385,14 @@ exports.addPlatformBook = async (req, res) => {
       category: category || null, tags: tags || "",
       status: bookStatus || "onsale", cover_img: cover_img || "",
       detail_imgs: detail_imgs || "", description: description || "", sales_count: 0,
+      create_datetime: new Date(),
     });
 
     await query("INSERT INTO book_condition_price SET ?", {
       type: "platform", book_id: result.insertId,
       condition: condition || 10, condition_desc: condition_desc || "",
       original_price: original_price || price || 0, price: price || 0, stock: stock || 1,
+      created_at: new Date(),
     });
 
     res.send({ status: 200, message: "添加平台图书成功", data: { book_id: result.insertId } });

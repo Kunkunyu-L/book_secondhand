@@ -21,6 +21,7 @@ exports.publishBook = (req, res) => {
     detail_imgs: detail_imgs || "",
     book_story: book_story || "",
     nope: 0,
+    create_datetime: new Date(),
   };
 
   const sql = "INSERT INTO user_book SET ?";
@@ -38,6 +39,7 @@ exports.publishBook = (req, res) => {
       original_price: original_price || price,
       price: price,
       stock: stock || 1,
+      created_at: new Date(),
     }, (err2) => {
       if (err2) return res.cc(err2);
       res.send({ status: 200, message: "发布成功", data: { book_id: bookId } });

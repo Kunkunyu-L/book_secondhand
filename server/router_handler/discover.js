@@ -1,9 +1,9 @@
 const db = require("../db/config");
 
-// 帖子列表（分页，按时间倒序；my=1 时仅当前用户帖子，需登录）
+// Public post list
 exports.getPosts = (req, res) => {
-  const page = Math.max(1, parseInt(req.query.page) || 1);
-  const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize) || 10));
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
   const offset = (page - 1) * pageSize;
   const whereClause = "p.status = 1";
   const countWhere = "status = 1";
@@ -17,17 +17,18 @@ exports.getPosts = (req, res) => {
     LIMIT ? OFFSET ?
   `;
   const countSql = "SELECT COUNT(*) AS total FROM discover_post WHERE " + countWhere;
+
   db.query(countSql, (err, countRes) => {
     if (err) return res.cc(err);
     const total = countRes[0].total;
-    db.query(sql, [pageSize, offset], (err, results) => {
-      if (err) return res.cc(err);
-      res.send({ status: 200, message: "获取成功", data: results, total });
+    db.query(sql, [pageSize, offset], (listErr, results) => {
+      if (listErr) return res.cc(listErr);
+      res.send({ status: 200, message: "ok", data: results, total });
     });
   });
 };
 
-// 我发布的帖子（需登录）
+// Current user's posts
 exports.getMyPosts = (req, res) => {
   const userId = req.auth.id;
   const sql = `
@@ -38,63 +39,95 @@ exports.getMyPosts = (req, res) => {
   `;
   db.query(sql, [userId], (err, results) => {
     if (err) return res.cc(err);
-    res.send({ status: 200, data: results });
+    res.send({ status: 200, data: results || [] });
   });
 };
 
-// 发帖（需登录）
+// Create post
 exports.createPost = (req, res) => {
   const userId = req.auth.id;
-  const { content, images } = req.body;
-  if (!content || !String(content).trim()) return res.cc("内容不能为空", 400);
+  const { content, images } = req.body || {};
+  const trimContent = String(content || "").trim();
+  if (!trimContent) return res.cc("内容不能为空", 400);
+
   const sql = "INSERT INTO discover_post (user_id, content, images, create_time) VALUES (?, ?, ?, NOW())";
   const imgStr = Array.isArray(images) ? images.join(",") : (images || "");
-  db.query(sql, [userId, String(content).trim(), imgStr], (err, result) => {
+  db.query(sql, [userId, trimContent, imgStr], (err, result) => {
     if (err) return res.cc(err);
     res.send({ status: 200, message: "发布成功", data: { id: result.insertId } });
   });
 };
 
-// 点赞/取消点赞（需登录）
+// Update current user's post
+exports.updateMyPost = (req, res) => {
+  const userId = req.auth.id;
+  const { id, content, images } = req.body || {};
+  const postId = parseInt(id, 10);
+  const trimContent = String(content || "").trim();
+  if (!postId || !trimContent) return res.cc("参数不完整", 400);
+
+  const checkSql = "SELECT id FROM discover_post WHERE id=? AND user_id=? AND status=1 LIMIT 1";
+  db.query(checkSql, [postId, userId], (checkErr, rows) => {
+    if (checkErr) return res.cc(checkErr);
+    if (!rows || rows.length === 0) return res.cc("帖子不存在或无权限", 404);
+
+    const imgStr = Array.isArray(images) ? images.join(",") : (images || "");
+    const updateSql = "UPDATE discover_post SET content=?, images=? WHERE id=? AND user_id=?";
+    db.query(updateSql, [trimContent, imgStr, postId, userId], (updateErr) => {
+      if (updateErr) return res.cc(updateErr);
+      res.send({ status: 200, message: "修改成功" });
+    });
+  });
+};
+
+// Toggle like
 exports.toggleLike = (req, res) => {
   const userId = req.auth.id;
   const postId = parseInt(req.params.id, 10);
   if (!postId) return res.cc("参数错误", 400);
-  const selSql = "SELECT id FROM discover_post_like WHERE post_id=? AND user_id=?";
-  db.query(selSql, [postId, userId], (err, rows) => {
+
+  const selectSql = "SELECT id FROM discover_post_like WHERE post_id=? AND user_id=?";
+  db.query(selectSql, [postId, userId], (err, rows) => {
     if (err) return res.cc(err);
     const hasLiked = rows.length > 0;
+
     if (hasLiked) {
-      db.query("DELETE FROM discover_post_like WHERE post_id=? AND user_id=?", [postId, userId], (err2) => {
-        if (err2) return res.cc(err2);
+      db.query("DELETE FROM discover_post_like WHERE post_id=? AND user_id=?", [postId, userId], (delErr) => {
+        if (delErr) return res.cc(delErr);
         db.query("UPDATE discover_post SET like_count = GREATEST(0, like_count - 1) WHERE id=?", [postId], () => {});
-        res.send({ status: 200, message: "已取消点赞", data: { liked: false } });
+        res.send({ status: 200, message: "取消点赞", data: { liked: false } });
       });
     } else {
-      db.query("INSERT INTO discover_post_like (post_id, user_id, create_time) VALUES (?, ?, NOW())", [postId, userId], (err2) => {
-        if (err2) return res.cc(err2);
-        db.query("UPDATE discover_post SET like_count = like_count + 1 WHERE id=?", [postId], () => {});
-        res.send({ status: 200, message: "点赞成功", data: { liked: true } });
-      });
+      db.query(
+        "INSERT INTO discover_post_like (post_id, user_id, create_time) VALUES (?, ?, NOW())",
+        [postId, userId],
+        (insErr) => {
+          if (insErr) return res.cc(insErr);
+          db.query("UPDATE discover_post SET like_count = like_count + 1 WHERE id=?", [postId], () => {});
+          res.send({ status: 200, message: "点赞成功", data: { liked: true } });
+        }
+      );
     }
   });
 };
 
-// 某帖是否已点赞（需登录）
+// Is post liked by current user
 exports.checkLiked = (req, res) => {
   const userId = req.auth.id;
   const postId = parseInt(req.params.id, 10);
   if (!postId) return res.cc("参数错误", 400);
+
   db.query("SELECT id FROM discover_post_like WHERE post_id=? AND user_id=?", [postId, userId], (err, rows) => {
     if (err) return res.cc(err);
     res.send({ status: 200, data: { liked: rows.length > 0 } });
   });
 };
 
-// 评论列表（公开）
+// Public comments list
 exports.getComments = (req, res) => {
   const postId = parseInt(req.params.id, 10);
   if (!postId) return res.cc("参数错误", 400);
+
   const sql = `
     SELECT c.id, c.post_id, c.user_id, c.reply_to_id, c.content, c.create_time,
            u.nickname, u.avatar
@@ -105,39 +138,40 @@ exports.getComments = (req, res) => {
   `;
   db.query(sql, [postId], (err, results) => {
     if (err) return res.cc(err);
-    res.send({ status: 200, data: results });
+    res.send({ status: 200, data: results || [] });
   });
 };
 
-// 发表评论（需登录）
+// Create comment
 exports.createComment = (req, res) => {
   const userId = req.auth.id;
   const postId = parseInt(req.params.id, 10);
-  const { content, reply_to_id } = req.body;
-  if (!postId || !content || !String(content).trim()) return res.cc("参数错误", 400);
+  const { content, reply_to_id } = req.body || {};
+  const trimContent = String(content || "").trim();
+  if (!postId || !trimContent) return res.cc("参数错误", 400);
+
   const sql = "INSERT INTO discover_post_comment (post_id, user_id, reply_to_id, content, create_time) VALUES (?, ?, ?, ?, NOW())";
   const replyId = reply_to_id ? parseInt(reply_to_id, 10) : null;
-  db.query(sql, [postId, userId, replyId, String(content).trim()], (err, result) => {
+  db.query(sql, [postId, userId, replyId, trimContent], (err, result) => {
     if (err) return res.cc(err);
     db.query("UPDATE discover_post SET comment_count = comment_count + 1 WHERE id=?", [postId], () => {});
     res.send({ status: 200, message: "评论成功", data: { id: result.insertId } });
   });
-}
+};
 
-// 删除我发布的帖子（需登录）
-// 约定：前端以 body 传 { id }
+// Delete current user's post
 exports.deleteMyPost = (req, res) => {
   const userId = req.auth.id;
   const { id } = req.body || {};
-  if (!id) return res.cc("参数不完整", 400);
+  const postId = parseInt(id, 10);
+  if (!postId) return res.cc("参数不完整", 400);
 
-  // 同步删除点赞/评论，再删除帖子本身（仅限本人）
-  db.query("DELETE FROM discover_post_like WHERE post_id=?", [id], (err) => {
+  db.query("DELETE FROM discover_post_like WHERE post_id=?", [postId], (err) => {
     if (err) return res.cc(err);
-    db.query("DELETE FROM discover_post_comment WHERE post_id=?", [id], (err2) => {
+    db.query("DELETE FROM discover_post_comment WHERE post_id=?", [postId], (err2) => {
       if (err2) return res.cc(err2);
 
-      db.query("DELETE FROM discover_post WHERE id=? AND user_id=?", [id, userId], (err3, result) => {
+      db.query("DELETE FROM discover_post WHERE id=? AND user_id=?", [postId, userId], (err3, result) => {
         if (err3) return res.cc(err3);
         if (!result || result.affectedRows === 0) return res.cc("帖子不存在或无权限", 404);
         res.send({ status: 200, message: "删除成功" });

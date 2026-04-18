@@ -95,11 +95,8 @@ onMounted(() => { fetchCaptcha(); loadSiteConfig() })
     <div class="login-left">
       <div class="left-inner">
         <div class="brand">
-          <el-image v-if="siteConfig.site_logo" :src="getImageUrl(siteConfig.site_logo)" class="brand-logo-img" fit="contain" />
-          <div v-else class="brand-logo">{{ siteConfig.site_name?.charAt(0) || 'B' }}</div>
-          <div class="brand-text">
-            <div class="brand-title">{{ siteConfig.site_name }}</div>
-            <div class="brand-sub">{{ siteConfig.site_description }}</div>
+          <div class="brand-logo-wrap">
+            <img :src="siteConfig.site_logo ? getImageUrl(siteConfig.site_logo) : '/logo.png'" alt="logo" class="brand-logo-img" />
           </div>
         </div>
         <div class="slogan">
@@ -217,6 +214,7 @@ onMounted(() => { fetchCaptcha(); loadSiteConfig() })
 
 .left-inner {
   max-width: 520px;
+  width: 100%;
 }
 
 .brand {
@@ -226,34 +224,10 @@ onMounted(() => { fetchCaptcha(); loadSiteConfig() })
   margin-bottom: 32px;
 }
 
-.brand-logo {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: #fff;
-  font-weight: 700;
-  font-size: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.brand-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.brand-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.brand-sub {
-  font-size: 13px;
-  color: #6b7280;
+.brand-logo-wrap {
+  width: 220px;
+  max-width: 220px;
+  flex-shrink: 0;
 }
 
 .slogan h1 {
@@ -441,10 +415,12 @@ onMounted(() => { fetchCaptcha(); loadSiteConfig() })
 }
 
 .brand-logo-img {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  flex-shrink: 0;
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 64px;
+  object-fit: contain;
+  object-position: left center;
 }
 
 @media (max-width: 960px) {

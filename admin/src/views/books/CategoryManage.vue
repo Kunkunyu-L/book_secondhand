@@ -3,30 +3,14 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getCategoriesApi, addCategoryApi, updateCategoryApi, deleteCategoryApi } from '@/api'
 import { formatTime } from '@/utils/format'
-import { uploadImage } from '@/utils/network'
-import { getImageUrl } from '@/utils/helpers'
 
 const tableData = ref<any[]>([])
 const loading = ref(false)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
-const uploadLoading = ref(false)
 
 const defaultForm = { id: 0, name: '', img: '', sort: 0, status: 1 }
 const form = reactive({ ...defaultForm })
-
-const handleCategoryImgUpload = async (options: { file: File }) => {
-  uploadLoading.value = true
-  try {
-    const { url } = await uploadImage(options.file, 'category')
-    form.img = url
-    ElMessage.success('图片上传成功')
-  } catch (e: any) {
-    ElMessage.error(e.message || '上传失败')
-  } finally {
-    uploadLoading.value = false
-  }
-}
 
 const loadData = async () => {
   loading.value = true
@@ -107,19 +91,6 @@ onMounted(loadData)
 
     <el-table :data="tableData" v-loading="loading" border stripe>
       <el-table-column type="index" label="序号" width="60" align="center" />
-      <el-table-column prop="img" label="图片" width="90" align="center">
-        <template #default="{ row }">
-          <el-image
-            v-if="row.img"
-            :src="getImageUrl(row.img)"
-            style="width: 40px; height: 40px; border-radius: 4px"
-            fit="cover"
-            :preview-src-list="[getImageUrl(row.img)]"
-            preview-teleported
-          />
-          <span v-else style="color: #c0c4cc">暂无</span>
-        </template>
-      </el-table-column>
       <el-table-column prop="name" label="分类名称" min-width="150" />
       <el-table-column prop="sort" label="排序权重" width="100" align="center" />
       <el-table-column prop="status" label="状态" width="90" align="center">
@@ -154,20 +125,6 @@ onMounted(loadData)
         <el-form-item label="分类名称">
           <el-input v-model="form.name" placeholder="请输入分类名称" maxlength="50" />
         </el-form-item>
-        <el-form-item label="分类图片">
-          <el-upload
-            :show-file-list="false"
-            :http-request="handleCategoryImgUpload"
-            accept="image/jpeg,image/png,image/gif,image/webp"
-          >
-            <template #tip><span class="el-upload__tip">支持 jpg/png/gif/webp，单张不超过 5MB</span></template>
-            <div v-if="form.img" class="upload-preview">
-              <el-image :src="getImageUrl(form.img)" style="width:80px;height:80px;border-radius:6px" fit="cover" />
-              <span class="upload-tip">点击更换</span>
-            </div>
-            <el-button v-else type="primary" :loading="uploadLoading">上传图片</el-button>
-          </el-upload>
-        </el-form-item>
         <el-form-item label="排序权重">
           <el-input-number v-model="form.sort" :min="0" :max="999" />
           <span style="margin-left: 8px; color: #909399; font-size: 12px">数字越大越靠前</span>
@@ -189,8 +146,3 @@ onMounted(loadData)
     </el-dialog>
   </el-card>
 </template>
-
-<style scoped>
-.upload-preview { cursor: pointer; }
-.upload-tip { font-size: 12px; color: #909399; display: block; margin-top: 4px; }
-</style>

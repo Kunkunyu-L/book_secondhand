@@ -8,6 +8,7 @@ router.get("/posts", handler.getPosts);
 router.get("/my-posts", handler.getMyPosts);
 // 发帖（需认证）
 router.post("/posts", handler.createPost);
+router.put("/posts", handler.updateMyPost);
 // 点赞/取消（需认证）
 router.post("/posts/:id/like", handler.toggleLike);
 // 是否已点赞（需认证）

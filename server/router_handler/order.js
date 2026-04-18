@@ -154,6 +154,7 @@ exports.createOrder = (req, res) => {
         status: "pending",
         address_snapshot: addressSnapshot,
         remark: remark || null,
+        created_at: new Date(),
       };
 
       db.query(orderSql, orderData, (err3, orderResult) => {

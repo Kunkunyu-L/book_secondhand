@@ -33,6 +33,7 @@ exports.register = (req, res) => {
       username: userinfo.username,
       password: userinfo.password,
       phone: userinfo.phone,
+      created_at: new Date(),
     };
     db.query(sql, arr, (err, results) => {
       if (err) return res.cc(err);

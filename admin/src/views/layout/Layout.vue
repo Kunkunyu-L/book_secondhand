@@ -163,8 +163,7 @@ const handleLogout = () => { authStore.logout(); router.push('/login') }
   <el-container class="layout-container">
     <el-aside :width="isCollapse ? '64px' : '220px'" class="layout-aside">
       <div class="logo">
-        <el-icon :size="22" class="logo-icon"><Reading /></el-icon>
-        <span v-if="!isCollapse" class="logo-text">{{ siteName }} 后台</span>
+        <img src="/logo.png" alt="logo" class="logo-img" />
       </div>
       <el-scrollbar>
         <el-menu
@@ -305,7 +304,7 @@ const handleLogout = () => { authStore.logout(); router.push('/login') }
   border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
 }
-.logo-icon { color: #374151; }
+.logo-img { width: 90%; height: auto; object-fit: contain; }
 .logo-text { color: #1f2937; font-size: 15px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; }
 .layout-header {
   display: flex;
